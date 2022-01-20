@@ -273,7 +273,7 @@ def predict_on_test(X_train, y_train, X_test, y_test, reg):
     
     return r2
 
-def bootstrap_test(X,y,gr,reg,procedure,splits=5,test_size=0.30,n_components=0.80,n_resampling=1000,njobs=5):
+def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resampling=1000,njobs=5):
     """
     Split the data according to the group parameters
     to ensure that the train and test sets are completely independent
@@ -284,7 +284,6 @@ def bootstrap_test(X,y,gr,reg,procedure,splits=5,test_size=0.30,n_components=0.8
     Y: predicted variable (array-like)
     gr: group labels used for splitting the dataset (array-like)
     reg: regression strategy to use 
-    procedure: strategy to split the data
     splits: number of split for the cross-validation 
     test_size: percentage of the data in the test set
     n_components: number of components (or percentage) to include in the PCA 
