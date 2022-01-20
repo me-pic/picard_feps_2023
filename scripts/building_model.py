@@ -268,8 +268,89 @@ def predict_on_test(X_train, y_train, X_test, y_test, reg):
     ----------
     r2: metric to evaluate the performance of the model
     """
-    df_metrics = pd.DataFrame(columns=["r2", "mae", "mse", "rmse"])
     final_model = reg.fit(X_train, y_train)
     r2 = r2_score(y_test, final_model.predict(X_test))
     
     return r2
+
+def bootstrap_test(X,y,gr,reg,procedure,splits=5,test_size=0.30,n_components=0.80,n_resampling=1000,njobs=5):
+    """
+    Split the data according to the group parameters
+    to ensure that the train and test sets are completely independent
+
+    Parameters
+    ----------
+    X: predictive variable (array-like)
+    Y: predicted variable (array-like)
+    gr: group labels used for splitting the dataset (array-like)
+    reg: regression strategy to use 
+    procedure: strategy to split the data
+    splits: number of split for the cross-validation 
+    test_size: percentage of the data in the test set
+    n_components: number of components (or percentage) to include in the PCA 
+    n_resampling: number of resampling subsets
+    njobs: number of jobs to run in parallel
+
+    Returns
+    ----------
+    bootarray: 2D array containing regression coefficients at voxel level for each resampling (array-like)
+    """
+
+    procedure = GroupShuffleSplit(n_splits=splits,test_size=test_size)
+
+    bootstrap_coef = Parallel(n_jobs=njobs,verbose=1)(
+        delayed(_bootstrap_test)(
+            X=X,
+            y=y,
+            gr=gr,
+            reg=reg,
+            splits=splits,
+            procedure=procedure,
+            test_size=test_size,
+            n_components=n_components,
+        )
+        for _ in range(n_resampling)
+    )
+    bootstrap_coef=np.stack(bootstrap_coef)
+
+    bootarray = bootstrap_coef.reshape(-1, bootstrap_coef.shape[-1])
+    
+    return bootarray
+
+def _bootstrap_test(X,y,gr,reg,procedure,n_components):
+    """
+    Split the data according to the group parameters
+    to ensure that the train and test sets are completely independent
+
+    Parameters
+    ----------
+    X: predictive variable
+    y: predicted variable
+    gr: group labels used for splitting the dataset
+    reg: regression strategy to use
+    procedure: strategy to split the data
+    n_components: number of components (or percentage) to include in the PCA
+
+    Returns
+    ----------
+    coefs_voxel: regression coefficients for each voxel
+    """
+    coefs_voxel = []
+    #Random sample
+    idx = list(range(0,len(y)))
+    random_idx = np.random.choice(idx,
+                                  size=len(idx),
+                                  replace=True)
+    X_sample = X[random_idx]
+    y_sample = y[random_idx]
+    gr_sample = gr[random_idx]
+    
+    #Train the model and save the regression coefficients
+    for train_idx, test_idx in procedure.split(X_sample, y_sample, gr_sample):
+        X_train, y_train = X_sample[train_idx], y_sample[train_idx]
+        #X_test, y_test = X_sample[test_idx], y_sample[test_idx]
+        model = reg_PCA(n_components,reg=reg)
+        model.fit(X_train, y_train)
+        coefs_voxel.append(model.inverse_transform(model.coef_))
+        
+    return coefs_voxel
