@@ -303,9 +303,7 @@ def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resamp
             y=y,
             gr=gr,
             reg=reg,
-            splits=splits,
             procedure=procedure,
-            test_size=test_size,
             n_components=n_components,
         )
         for _ in range(n_resampling)
