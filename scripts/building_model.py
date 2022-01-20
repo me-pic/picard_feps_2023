@@ -348,6 +348,6 @@ def _bootstrap_test(X,y,gr,reg,procedure,n_components):
         #X_test, y_test = X_sample[test_idx], y_sample[test_idx]
         model = reg_PCA(n_components,reg=reg)
         model.fit(X_train, y_train)
-        coefs_voxel.append(model.inverse_transform(model.coef_))
+        coefs_voxel.append(model[0].inverse_transform(model[1].coef_))
         
     return coefs_voxel
