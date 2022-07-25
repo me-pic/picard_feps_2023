@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
+import os
+import errno
 import json
 import pickle
+import shutil
+import sys
+from datetime import datetime
 import prepping_data
 import building_model
+import pandas as pd
 import numpy as np
 import nibabel as nib
 from nilearn.masking import unmask
-from sklearn.linear_model import Lasso, Ridge
-from sklearn.svm import SVR
+from sklearn.linear_model import Lasso, Ridge, HuberRegressor, LinearRegression
+from sklearn.svm import SVR, SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
 from argparse import ArgumentParser
 
@@ -27,7 +35,7 @@ def main():
     Areas of the brain that will be used to extract the data:
 
     'whole-brain': extract the activity from the whole-brain
-    PATH_TO_MASK: model could take the path to a specified mask (niimg-like object)
+    <PATH_TO_MASK>: model could take the path to a specified mask (niimg-like object)
 
     reg parameter
     -------------
