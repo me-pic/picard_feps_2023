@@ -22,6 +22,14 @@ args = parser.parse_args()
 metric='cosine'
 permutation=True 
 n_permutation=10000
+gr_mask='../'
+
+#Compute the spatial similarity between signatures defined in path_signature and path_feps
+similarity_signatures = similarity(args.path_signature, args.path_feps, gr_mask, metric=None)
+#Save the output
+with open(os.path.join(args.path_output, f"spatial_similarity_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+    pickle.dump(similarity_signatures, output_file)
+output_file.close()
 
 #Load the altas
 atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
@@ -36,7 +44,7 @@ for i in range(1,8):
 #Compute the spatial similarity across the cortical networks
 similarity_cortical, perm_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
 #Save the output
-with open(os.path.join(args.path_output, f"cosine_similarity_cortical_networks_feps_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+with open(os.path.join(args.path_output, f"spatial_similarity_cortical_networks_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
     pickle.dump([similarity_cortical, perm_cortical], output_file)
 output_file.close()
 
@@ -48,9 +56,49 @@ def cosine_similarity(A,B):
     return (np.dot(A,B.T)/(norm(A)*norm(B)))
 
 
-def similarity_across_networks(path_signature, path_feps, path_mask, labels=None, metric=None, permutation=False, n_permutation=10000):
+def similarity(path_signature, path_feps, gr_mask, metric=None):
     """
     Compute spatial similarity metrics between two signatures defined in path_signature and path_feps
+    
+    Parameters
+    ----------
+    path_signature: string
+        signature path (path to nii file) on which to calculate the similarity with the signature defined in the path_feps
+    path_feps: string
+        feps path (path to nii file) on which to calculate the similarity with the signature defined in the path_signature
+    metric: string (None)
+        metric to use to compute the spatial similarity between the signature and the feps. If the metric is not defined, 
+        both the cosine similarity and the pearson product-moment correlation will be computed
+        'cosine': compute the cosine similarity between the signature and the feps
+        'pearson': compute the pearson product-moment correlation between the signature and the feps
+    
+    Returns
+    -------
+    similarity: list
+        list containing the similarity metric(s)
+    """
+    #Extract the signature and the feps signal
+    masker = NiftiMasker(gr_mask)
+    feps = masker.fit_transform(path_feps)
+    masker = NiftiMasker(gr_mask)
+    signature = masker.fit_transform(path_signature)
+    
+    if metric=='cosine':
+        #compute cosine similarity
+        similarity.append(cosine_similarity(feps, signature)[0][0])
+    elif metric=='pearson':
+        #Compute pearson product-moment correlation
+        similarity.append(np.corrcoef(feps, signature)[0][1])
+    else:
+        #Compute both cosine similarity and pearson product-moment correlation
+        similarity.append(cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1])
+    
+    return similarity
+
+
+def similarity_across_networks(path_signature, path_feps, path_mask, labels=None, metric=None, permutation=False, n_permutation=10000):
+    """
+    Compute spatial similarity metrics between two signatures defined in path_signature and path_feps across different networks/regions in path_mask
     
     Parameters
     ----------
@@ -94,7 +142,7 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
             similarity.append((label, cosine_similarity(feps, signature)[0][0]))
         elif metric=='pearson':
             #Compute pearson product-moment correlation
-            similarity.append(np.corrcoef(feps, signature)[0][1])
+            similarity.append((label, np.corrcoef(feps, signature)[0][1]))
         else:
             #Compute both cosine similarity and pearson product-moment correlation
             similarity.append((label, cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1]))
