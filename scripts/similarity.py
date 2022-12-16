@@ -11,6 +11,35 @@ import pickle
 import nibabel as nib
 from argparse import ArgumentParser
 
+parser = ArgumentParser()
+parser.add_argument('--path_signature', type=str, default=None)
+parser.add_argument('--path_feps', type=str, default=None)
+parser.add_argument('--path_output', type=str, default=None)
+args = parser.parse_args()
+
+#Define the parameters
+metric='cosine'
+permutation=True 
+n_permutation=10000
+
+#Load the altas
+atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
+atlas_yeo = atlas_yeo_2011.thick_7
+labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Attention', 'Limbic', 'Frontoparietal', 'Default']
+
+#Separated the atlas networks according to their index
+separated_regions = []
+for i in range(1,8):
+    separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
+
+#Compute the spatial similarity across the cortical networks
+similarity_cortical, perm_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
+#Save the output
+with open(os.path.join(args.path_output, f"cosine_similarity_cortical_networks_feps_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+    pickle.dump([similarity_cortical, perm_cortical], output_file)
+output_file.close()
+
+    
 def cosine_similarity(A,B):
     """
     Compute the cosine similarity between two vectors
@@ -51,7 +80,6 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
     
     """
     similarity = []
-    res = []
     perm_out = []
 
     for idx, label in enumerate(labels):
@@ -81,30 +109,3 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
             perm_out.append({'statistic': res_.statistic,'pval': res_.pvalue,'null_dist': res_.null_distribution})
     
     return similarity, perm_out
-    
-
-
-def compute_cosine_cortical_networks(path_signature, path_feps, path_output, permutation=False, n_permutation=10000):
-
-    atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
-    atlas_yeo = atlas_yeo_2011.thick_7
-    labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Attention', 'Limbic', 'Frontoparietal', 'Default']
-
-    separated_regions = []
-    for i in range(1,8):
-        separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
-
-    similarity_cortical, res_cortical = similarity_across_networks(path_signature=path_signature, path_feps=path_feps, path_mask=separated_regions, labels=labels_cortical, cosine=True, permutation=permutation, n_permutation=n_permutation)
-    with open(os.path.join(path_output, f"cosine_similarity_cortical_networks_feps_{path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
-        pickle.dump([similarity_cortical, res_cortical], output_file)
-    output_file.close()
-
-
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument('--path_signature', type=str, default=None)
-    parser.add_argument('--path_feps', type=str, default=None)
-    parser.add_argument('--path_output', type=str, default=None)
-    args = parser.parse_args()
-
-    compute_cosine_cortical_networks(args.path_signature, args.path_feps, args.path_output)
