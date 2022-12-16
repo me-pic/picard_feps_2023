@@ -11,44 +11,6 @@ import pickle
 import nibabel as nib
 from argparse import ArgumentParser
 
-#Arguments to pass to the script
-parser = ArgumentParser()
-parser.add_argument('--path_signature', type=str, default=None)
-parser.add_argument('--path_feps', type=str, default=None)
-parser.add_argument('--path_output', type=str, default=None)
-args = parser.parse_args()
-
-#Define the parameters
-metric='cosine'
-permutation=True 
-n_permutation=10000
-gr_mask='../'
-
-#Compute the spatial similarity between signatures defined in path_signature and path_feps
-similarity_signatures = similarity(args.path_signature, args.path_feps, gr_mask, metric=None)
-#Save the output
-with open(os.path.join(args.path_output, f"spatial_similarity_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
-    pickle.dump(similarity_signatures, output_file)
-output_file.close()
-
-#Load the altas
-atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
-atlas_yeo = atlas_yeo_2011.thick_7
-labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Attention', 'Limbic', 'Frontoparietal', 'Default']
-
-#Separated the atlas networks according to their index
-separated_regions = []
-for i in range(1,8):
-    separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
-
-#Compute the spatial similarity across the cortical networks
-similarity_cortical, perm_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
-#Save the output
-with open(os.path.join(args.path_output, f"spatial_similarity_cortical_networks_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
-    pickle.dump([similarity_cortical, perm_cortical], output_file)
-output_file.close()
-
-    
 def cosine_similarity(A,B):
     """
     Compute the cosine similarity between two vectors
@@ -77,6 +39,8 @@ def similarity(path_signature, path_feps, gr_mask, metric=None):
     similarity: list
         list containing the similarity metric(s)
     """
+    similarity=[]
+
     #Extract the signature and the feps signal
     masker = NiftiMasker(gr_mask)
     feps = masker.fit_transform(path_feps)
@@ -85,13 +49,13 @@ def similarity(path_signature, path_feps, gr_mask, metric=None):
     
     if metric=='cosine':
         #compute cosine similarity
-        similarity.append(cosine_similarity(feps, signature)[0][0])
+        similarity = cosine_similarity(feps, signature)[0][0]
     elif metric=='pearson':
         #Compute pearson product-moment correlation
-        similarity.append(np.corrcoef(feps, signature)[0][1])
+        similarity = np.corrcoef(feps, signature)[0][1]
     else:
         #Compute both cosine similarity and pearson product-moment correlation
-        similarity.append(cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1])
+        similarity = (cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1])
     
     return similarity
 
@@ -158,3 +122,44 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
             perm_out.append({'statistic': res_.statistic,'pval': res_.pvalue,'null_dist': res_.null_distribution})
     
     return similarity, perm_out
+
+
+
+#Arguments to pass to the script
+parser = ArgumentParser()
+parser.add_argument('--path_signature', type=str, default=None)
+parser.add_argument('--path_feps', type=str, default=None)
+parser.add_argument('--path_output', type=str, default=None)
+args = parser.parse_args()
+
+#./similarity.py --path_signature '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/brain_signatures/nonnoc_v11_4_137subjmap_weighted_mean.nii' --path_feps '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/brain_signatures/z_bootstrap_lasso_standard_True_sample_5000_None.nii' --path_output '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs'
+
+#Define the parameters
+metric=None #'cosine'
+permutation=True 
+n_permutation=10000
+gr_mask='../masks/masker.nii.gz'
+
+#Compute the spatial similarity between signatures defined in path_signature and path_feps
+similarity_signatures = similarity(args.path_signature, args.path_feps, gr_mask, metric=None)
+#Save the output
+with open(os.path.join(args.path_output, f"spatial_similarity_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+    pickle.dump(similarity_signatures, output_file)
+output_file.close()
+
+#Load the altas
+atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
+atlas_yeo = atlas_yeo_2011.thick_7
+labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Attention', 'Limbic', 'Frontoparietal', 'Default']
+
+#Separated the atlas networks according to their index
+separated_regions = []
+for i in range(1,8):
+    separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
+
+#Compute the spatial similarity across the cortical networks
+similarity_cortical, perm_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
+#Save the output
+with open(os.path.join(args.path_output, f"spatial_similarity_cortical_networks_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+    pickle.dump([similarity_cortical, perm_cortical], output_file)
+output_file.close()
