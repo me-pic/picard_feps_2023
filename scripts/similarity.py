@@ -46,16 +46,13 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
     -------
     similarity: list 
         list containing the similarity metric(s) for each region/network contained in the mask
-    res_dict: dictionnary 
-        dictionnary containing the results of the permutation. If permutation == False, return an empty dictionnary
+    perm_out: list
+        list containing the results of the permutation for each network/region. If permutation == False, return an empty list
     
     """
     similarity = []
     res = []
-    statistic = []
-    pval = []
-    null_dist = []
-    res_dict = {}
+    perm_out = []
 
     for idx, label in enumerate(labels):
         #Define the masker based on mask in path_mask
@@ -71,7 +68,7 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
             similarity.append(np.corrcoef(feps, signature)[0][1])
         else:
             #Compute both cosine similarity and pearson product-moment correlation
-            cos_sim.append((label, cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1]))
+            similarity.append((label, cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1]))
 
         if permutation:
             res_ = permutation_test((signature, feps), 
@@ -81,16 +78,9 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
                                     alternative='two-sided', 
                                     random_state=42, axis=1
                                    )
-            res.append(res_)
+            perm_out.append({'statistic': res_.statistic,'pval': res_.pvalue,'null_dist': res_.null_distribution})
     
-            for network in res:
-                statistic.append(network.statistic)
-                pval.append(network.pvalue)
-                null_dist.append(network.null_distribution)
-
-            res_dict = {'statistic': statistic,'pval': pval,'null_dist': null_dist}
-    
-    return similarity, res_dict
+    return similarity, perm_out
     
 
 
