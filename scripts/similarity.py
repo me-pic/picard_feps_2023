@@ -133,7 +133,7 @@ args = parser.parse_args()
 #./similarity.py --path_signature '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/brain_signatures/nonnoc_v11_4_137subjmap_weighted_mean.nii' --path_feps '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/brain_signatures/z_bootstrap_lasso_standard_True_sample_5000_None.nii' --path_output '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs'
 
 #Define the parameters
-metric=None #'cosine'
+metric='cosine'
 permutation=True 
 n_permutation=10000
 gr_mask='../masks/masker.nii.gz'
@@ -152,7 +152,7 @@ labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Atte
 
 #Separated the atlas networks according to their index
 separated_regions = []
-for i in range(1,8):
+for i in range(1,len(labels_cortical)+1):
     separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
 
 #Compute the spatial similarity across the cortical networks
