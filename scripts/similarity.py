@@ -11,6 +11,7 @@ import pickle
 import nibabel as nib
 from argparse import ArgumentParser
 
+#Arguments to pass to the script
 parser = ArgumentParser()
 parser.add_argument('--path_signature', type=str, default=None)
 parser.add_argument('--path_feps', type=str, default=None)
