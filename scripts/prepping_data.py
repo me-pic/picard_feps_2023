@@ -12,7 +12,8 @@ def hdr_to_Nifti(files):
 
     Parameters
     ----------
-    files: list of paths to each hdr file
+    files: list 
+        list of paths to each hdr file
 
     Returns
     ----------
@@ -27,30 +28,6 @@ def hdr_to_Nifti(files):
     return array 
 
 
-def y_transformer(y, func = np.log1p):
-    """
-    Transform y using a specified function
-
-    Parameters
-    ----------
-    y: variable to transform
-    func: list of numpy transformations to apply to the variable
-
-    Returns
-    ----------
-    df_y: DataFrame containing y and the transformed y according to the specified transformations
-    """
-    df_y = pd.DataFrame(y.tolist(), columns = ["y"])
-
-    for element in func:
-        transformer = FunctionTransformer(element, validate=True)
-        Y_transformed = transformer.fit_transform(y.reshape(-1,1))
-        Y_transformed = Y_transformed[:,0]
-        df_y[str(element).replace("<ufunc '", ""). replace("'>","")] = Y_transformed.tolist()
-
-    return df_y
-
-
 def extract_signal(data, mask="template", standardize = True):
     """
     Apply a mask to extract the signal from the data and save the mask
@@ -58,9 +35,12 @@ def extract_signal(data, mask="template", standardize = True):
 
     Parameters
     ----------
-    data: list of Niimg-like objects
-    mask: strategy to compute the mask. By default the gray matter is extracted based on the MNI152 brain mask
-    standardize: strategy to standardize the signal. The signal is z-scored by default
+    data: list 
+        list of Niimg-like objects
+    mask: string
+        strategy to compute the mask. By default the gray matter is extracted based on the MNI152 brain mask
+    standardize: bool
+        strategy to standardize the signal. The signal is z-scored by default
 
     Returns
     ----------
