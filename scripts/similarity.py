@@ -6,9 +6,7 @@ from nilearn.image import math_img
 from nilearn import datasets
 from nilearn.maskers import NiftiMasker
 from scipy.stats import permutation_test
-import pandas as pd
 import pickle
-import nibabel as nib
 from argparse import ArgumentParser
 
 def cosine_similarity(A,B):
