@@ -34,8 +34,8 @@ def similarity(path_signature, path_feps, gr_mask, metric=None):
     
     Returns
     -------
-    similarity: list
-        list containing the similarity metric(s)
+    similarity: int or tuple
+        similarity metric. If cosine similarity and person correlation are computed, return a tuple
     """
     similarity=[]
 
@@ -129,8 +129,6 @@ parser.add_argument('--path_signature', type=str, default=None)
 parser.add_argument('--path_feps', type=str, default=None)
 parser.add_argument('--path_output', type=str, default=None)
 args = parser.parse_args()
-
-#./similarity.py --path_signature '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/brain_signatures/nonnoc_v11_4_137subjmap_weighted_mean.nii' --path_feps '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/brain_signatures/z_bootstrap_lasso_standard_True_sample_5000_None.nii' --path_output '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs'
 
 #Define the parameters
 metric='cosine'
