@@ -11,19 +11,51 @@ import pickle
 import nibabel as nib
 from argparse import ArgumentParser
 
-
-
-
 def cosine_similarity(A,B):
+    """
+    Compute the cosine similarity between two vectors
+    """
     return (np.dot(A,B.T)/(norm(A)*norm(B)))
 
 
-def similarity_across_networks(path_signature, path_feps, path_mask=None, labels=None, cosine=True, permutation=False, n_permutation=5000):
+def similarity_across_networks(path_signature, path_feps, path_mask, labels=None, metric=None, permutation=False, n_permutation=10000):
+    """
+    Compute spatial similarity metrics between two signatures defined in path_signature and path_feps
+    
+    Parameters
+    ----------
+    path_signature: string
+        signature path (path to nii file) on which to calculate the similarity with the signature defined in the path_feps
+    path_feps: string
+        feps path (path to nii file) on which to calculate the similarity with the signature defined in the path_signature
+    path_mask: string
+        path to the masks used to extract the signature and the feps signal
+    labels: list (None)
+        list containing the name of the networks/regions contained in the mask from path_mask
+    metric: string (None)
+        metric to use to compute the spatial similarity between the signature and the feps. If the metric is not defined, 
+        both the cosine similarity and the pearson product-moment correlation will be computed
+        'cosine': compute the cosine similarity between the signature and the feps
+        'pearson': compute the pearson product-moment correlation between the signature and the feps
+    permutation: bool (False)
+        if True, compute permutations in order to assess the significativity of the similarity metric; otherwise no permutations are computed
+    n_permutation: int (10000)
+        number of iterations to do if the permutation tests are conducted
+    
+    Returns
+    -------
+    similarity: list 
+        list containing the similarity metric(s) for each region/network contained in the mask
+    res_dict: dictionnary 
+        dictionnary containing the results of the permutation. If permutation == False, return an empty dictionnary
+    
+    """
     similarity = []
     res = []
     statistic = []
     pval = []
     null_dist = []
+    res_dict = {}
 
     for idx, label in enumerate(labels):
         #Define the masker based on mask in path_mask
@@ -31,12 +63,15 @@ def similarity_across_networks(path_signature, path_feps, path_mask=None, labels
         feps = masker.fit_transform(path_feps)
         masker = NiftiMasker(path_mask[idx])
         signature = masker.fit_transform(path_signature)
-        if cosine:
+        if metric=='cosine':
             #compute cosine similarity
             similarity.append((label, cosine_similarity(feps, signature)[0][0]))
-        else:
-            #Compute Pearson product-moment correlation
+        elif metric=='pearson':
+            #Compute pearson product-moment correlation
             similarity.append(np.corrcoef(feps, signature)[0][1])
+        else:
+            #Compute both cosine similarity and pearson product-moment correlation
+            cos_sim.append((label, cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1]))
 
         if permutation:
             res_ = permutation_test((signature, feps), 
@@ -48,14 +83,15 @@ def similarity_across_networks(path_signature, path_feps, path_mask=None, labels
                                    )
             res.append(res_)
     
-        for network in res:
-            statistic.append(network.statistic)
-            pval.append(network.pvalue)
-            null_dist.append(network.null_distribution)
+            for network in res:
+                statistic.append(network.statistic)
+                pval.append(network.pvalue)
+                null_dist.append(network.null_distribution)
 
-        res_dict = {'statistic': statistic,'pval': pval,'null_dist': null_dist}
+            res_dict = {'statistic': statistic,'pval': pval,'null_dist': null_dist}
     
     return similarity, res_dict
+    
 
 
 def compute_cosine_cortical_networks(path_signature, path_feps, path_output, permutation=False, n_permutation=10000):
@@ -81,4 +117,4 @@ if __name__ == "__main__":
     parser.add_argument('--path_output', type=str, default=None)
     args = parser.parse_args()
 
-    compute_cosine_cortical_networks(args.path_signature, args.path_feps, args.path_output, permutation=False, n_permutation=5000)
+    compute_cosine_cortical_networks(args.path_signature, args.path_feps, args.path_output)
