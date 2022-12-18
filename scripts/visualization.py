@@ -30,6 +30,24 @@ def load_pickle(path):
     return object_file
 
 def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, palette=None):
+    """
+    Parameters
+    ----------
+    x: string
+        name of the x axis
+    y: string
+        name of the y axis
+    signature_dot_prod: numpy.ndarray
+        array containing the pattern expression values
+    FACS: pandas Series or numpy.ndarray
+        FACS scores or any behavioral continuours variable
+    path_output: string
+        path for saving the output
+    idx: int
+        integer specifying the color to use in palette
+    palette: list
+        color palette to use for the graph
+    """
     sns_plot=sns.lmplot(x=x,
                         y=y,
                         data=pd.DataFrame(np.array([signature_dot_prod, FACS]).T, columns=[x, y]),
@@ -111,24 +129,21 @@ green_palette = ['#66c2a4', '#41ae76', '#238b45', '#005824']
 #Plotting the correlation between the signature expression and the FACS scores
 ########################################################################################
 if args.path_dot_product is not None:
-    ##Define the parameters
+    #Define the parameters
     behavioral_col = 'FACS'
     df_behavioral = pd.read_csv(args.path_behavioral)
     x = 'Pattern expression'
     y = 'FACS score'
-    fname = 'fnames_pain'
-    pattern_expression = 'pattern_exp_values_pain'
     idx = 0 #Adjust to change the color
 
-    load_dot_prod = loadmat(args.path_dot_product,simplify_cells=True)
-    signature_filenames, signature_dot_prod = load_dot_prod[fname], load_dot_prod[pattern_expression]
+    #Plot the correlation 
+    signature_dot_prod=np.load(args.path_dot_product)
     plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette)
 
 ########################################################################################
 #Plotting the signature weights
 ########################################################################################
-##Define the parameters
-
+#Define the parameters
 coords_to_plot = {'x':[46,12,4,-4,-42],
            'y':[-12],
            'z':[-12,-2,20,42,54,68]}
