@@ -41,7 +41,7 @@ Illustrator.
 <br>`python ./visualization.py --path_output '/path/to/output' --path_feps '/path/to/feps' 
 --path_behavioral '/path/to/behavioral/measures' --path_dot_product '/path/to/dot/product' 
 --path_performance '/path/to/performance/metrics' --path_y_test 'path/to/y/test' --path_y_pred 
-'/path/to/y/pred'`
+'/path/to/y/pred' --path_siips_similarity_networks '' --path_pvp_similarity_networks '' --path_maths_similarity_networks ''`
 - --path_output: specifies the path to output the figures
 - --path_feps (optional): specifies the path to the feps Nifti file. If not specified, the 
 signature weights will not be plotted 
@@ -57,3 +57,6 @@ plotted
 - --path_y_test (optional): specifies the path to the pickle file containing the y_test values. If 
 not specified, the regression plot of the model performance will not be plotted
 - --path_y_pred (optional): specifies the path to the pickle file containing the y_pred values
+- --path_siips_similarity_networks (optional): specifies the path to pickle file containing the spatial similarity metrics between the FEPS and the SIIPS-1. If not specified, the spatial similarity barplots across networks are not plotted
+- --path_pvp_similarity_networks (optional): specifies the path to pickle file containing the spatial similarity metrics between the FEPS and the PVP
+- --path_maths_similarity_networks (optional): specifies the path to pickle file containing the spatial similarity metrics between the FEPS and the MAThS
