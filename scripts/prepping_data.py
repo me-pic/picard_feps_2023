@@ -94,23 +94,30 @@ def extract_signal_from_mask(data, path_mask):
     affine = data[0].affine
     resample_mask = resample_img(mask,affine)
     signal = apply_mask(data, resample_mask, ensure_finite=True)
-    print(signal.shape, type(signal))
+    print(f'Signal size: {signal.shape}')
 
     return signal
 
 parser = ArgumentParser()
-#Path to json file
-parser.add_argument('--path_dataset', type=str, default=None)
+parser.add_argument('--path_dataset', type=str, default=None) #Path to json file containing the dataset information
 parser.add_argument('--path_mask', type=str, default=None)
 parser.add_argument('--path_output', type=str, default=None)
 args = parser.parse_args()
+
+#Define the parameters
+save_extracted_signal = False #if True, the extracted signal from mask will be save as a npz file
 
 data = json.loads(open(args.path_dataset, 'r').read())
 signal = hdr_to_Nifti(data['data'], '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/data_MK_pain')
 
 if args.path_mask is not None:
-    extract_signal_from_mask(signal, args.path_mask)
+    X = extract_signal_from_mask(signal, args.path_mask)
 else:
     masker, X = extract_signal(signal, mask="template", standardize = True, path_output=args.path_output, save = True)
-    
-#python ./prepping_data.py --path_dataset '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs/dataset.json' --path_output '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs'
+
+if save_extracted_signal:
+    if args.path_mask is not None:
+        filename = f"{os.path.basename(args.path_mask).split('.')[0]}_extracted_signal.npz"
+    else:
+        filename = 'full_brain_extracted_signal.npz'
+    np.savez(os.path.join(args.path_output, filename), X)
