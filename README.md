@@ -34,7 +34,7 @@ The similarity analysis can be run independently of the other scripts with [simi
 - --path_output: specifies the path to output the results
 
 ## Visualization
-The visualization script can be run with [visualization.py](). The fonts and the disposition of the figures were edited using Adobe 
+The visualization script can be run with [visualization.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/visualization.py). The fonts and the disposition of the figures were edited using Adobe 
 Illustrator.
 
 <b>How to launch the visualization script:</b>
