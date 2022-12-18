@@ -4,7 +4,10 @@
 
 ## Notes
 
-The scripts were developed to analyze already preprocessed trial-by-trial fMRI contrast images (hdr/img files). The data used in this study come from Kunz et al. (2012) study. The data were not in BIDS format. The scripts might not directly work on BIDS organized data. 
+The scripts were developed to analyze already preprocessed trial-by-trial fMRI contrast images (hdr/img files). The data used in 
+this study come from Kunz et al. (2012) study. The data were not in BIDS format. The scripts might not directly work on BIDS 
+organized data. Each script can be run separately, but a main script 
+([main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py)) is provided to run the complete analysis pipeline.
 
 The preprocessing of the data and the first level analysis were performed using SPM8. Details about those steps can be found in the Method section of the article.
 
