@@ -280,6 +280,11 @@ if args.path_feps is not None:
     plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
 
 ########################################################################################
+#Spatial similarity matrix
+########################################################################################
+
+
+########################################################################################
 #Spatial similarity across networks
 ########################################################################################
 if args.path_siips_similarity_networks is not None:
