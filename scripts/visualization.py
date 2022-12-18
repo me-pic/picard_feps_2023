@@ -4,7 +4,9 @@ import numpy as np
 from numpy.linalg import norm
 from nilearn.image import math_img
 import random
+import ptitprince as pt
 from nilearn import plotting
+import matplotlib.ticker as ticker
 from nilearn import datasets
 from nilearn.masking import unmask
 from nilearn.maskers import NiftiMasker
@@ -57,6 +59,74 @@ def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, pal
     plt.savefig(os.path.join(path_output, f'lmplot_{x}_expression_FACS.svg'))
 
 
+def violin_plot_performance():
+    current_palette = sns.color_palette('colorblind', 10)
+    colp = '#fe9929'
+    labelfontsize = 7
+    legendfontsize = np.round(labelfontsize*0.8)
+
+    fig1, ax1 = plt.subplots(figsize=(0.6, 1.5))
+
+
+    pt.half_violinplot(y=df_perfo_M1['r2'], inner=None,
+                    width=0.6,
+                        offset=0.17, cut=1, ax=ax1,
+                        color=colp,
+                        linewidth=1, alpha=1, zorder=19)
+
+
+    sns.stripplot(y=df_perfo_M1['r2'],
+                    jitter=0.08, ax=ax1,
+                    color=colp,
+                    linewidth=0.2, alpha=0.6, zorder=1)
+    sns.boxplot(y=df_perfo_M1['r2'], whis=np.inf, linewidth=1, ax=ax1,
+                width=0.1, boxprops={"zorder": 10, 'alpha': 0.5},
+                whiskerprops={'zorder': 10, 'alpha': 1},
+                color=colp,
+                medianprops={'zorder': 11, 'alpha': 0.9})
+
+    ax1.axhline(0, linestyle='--', color='k', linewidth=0.6)
+    ax1.set_ylabel('R2', fontsize=labelfontsize, labelpad=0.7)
+    ax1.tick_params(axis='y', labelsize=ticksfontsize)
+    ax1.set_xticks([], [])
+    for axis in ['top','bottom','left','right']:
+        ax1.spines[axis].set_linewidth(1)
+    ax1.tick_params(width=1, direction='out', length=4)
+
+
+    fig1.tight_layout()
+    plt.savefig('/Users/mepicard/Documents/master_analysis/picard_feps_2022/Figures/r2_10f_violin_stripplot_boxplot_M1.svg',transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+
+
+def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot'):
+    """
+    Parameters
+    ----------
+    y_test: list
+        list containing the values of y in the test set for each fold
+    y_pred: list
+        list containing the values of the predicted y for each fold
+    path_output: string
+        path for saving the output
+    """
+    fig1, ax1 = plt.subplots(figsize=(4,4))
+    ax1.set_xlim([0,42])
+    ax1.set_ylim([0,23])
+    for idx, elem in enumerate(y_test):
+        df = pd.DataFrame(list(zip(elem, y_pred[idx])), columns=['Y_true','Y_pred'])
+        sns.regplot(data=df, x='Y_true', y='Y_pred',
+                    ci=None, scatter=False, color=hot_palette_10[idx],
+                    ax=ax1, line_kws={'linewidth':1.4}, truncate=False)
+        ax1.xaxis.set_major_locator(ticker.MultipleLocator(5))
+        ax1.yaxis.set_major_locator(ticker.MultipleLocator(5))
+    plt.xlabel('FACS score')
+    plt.ylabel('Cross-validated prediction')
+    for axis in ['top','bottom','left','right']:
+        ax1.spines[axis].set_linewidth(2.6)
+    ax1.tick_params(width=2.6, direction='out', length=10)
+    plt.savefig(os.path.join(path_output, f'{filename}.svg'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+
+
 def plotting_signature_weights(path_signature, coords_to_plot, path_output):
     """
     Plot the signature weights given a set of coordinates
@@ -100,6 +170,8 @@ parser.add_argument("--path_feps", type=str, default=None)
 parser.add_argument("--path_output", type=str, default=None)
 parser.add_argument("--path_behavioral", type=str, default=None)
 parser.add_argument("--path_dot_product", type=str, default=None)
+parser.add_argument("--path_y_test", type=str, default=None)
+parser.add_argument("--path_y_pred", type=str, default=None)
 args = parser.parse_args()
 
 #Define the general parameters
@@ -143,6 +215,22 @@ if args.path_dot_product is not None:
     plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette)
 
 ########################################################################################
+#Plotting the performance of the model
+########################################################################################
+if args.path_y_test is not None:
+    #Define the parameters
+    y_test = load_pickle(args.path_y_test)
+    y_pred = load_pickle(args.path_y_pred)
+    filename='regplot'
+
+    print(y_test)
+    print(type(y_test))
+
+    #Violin plot visualization
+    #Regression plot visualization
+    reg_plot_performance(y_test, y_pred, path_output=args.path_output, filename=filename)
+
+########################################################################################
 #Plotting the signature weights
 ########################################################################################
 #Define the parameters
@@ -152,9 +240,3 @@ coords_to_plot = {'x':[46,12,4,-4,-42],
 
 #Plot the signature weights
 plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
-
-
-
-
-
-
