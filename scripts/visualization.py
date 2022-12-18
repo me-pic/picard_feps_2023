@@ -59,47 +59,60 @@ def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, pal
     plt.savefig(os.path.join(path_output, f'lmplot_{x}_expression_FACS.svg'))
 
 
-def violin_plot_performance():
-    current_palette = sns.color_palette('colorblind', 10)
-    colp = '#fe9929'
+def violin_plot_performance(df, metric='pearson_r', color='#fe9929', path_output='', filename='violin_plot'):
+    """
+    Plot the violin plot associated to the model performance across all folds
+
+    Parameters
+    ----------
+    df: dataFrame
+        dataFrame containing the performance metrics for all folds
+    metric: string
+        performance metric to use as defined in the dataFrame
+    color: string
+        color to use for the plots
+    path_output: string
+        path for saving the output
+    filename: string
+        name of the output file
+    
+    Code adapted from https://github.com/mpcoll/coll_painvalue_2021/tree/main/figures
+    """
+    colp = color
     labelfontsize = 7
-    legendfontsize = np.round(labelfontsize*0.8)
+    ticksfontsize = np.round(labelfontsize*0.8)
 
     fig1, ax1 = plt.subplots(figsize=(0.6, 1.5))
-
-
-    pt.half_violinplot(y=df_perfo_M1['r2'], inner=None,
+    pt.half_violinplot(y=df[metric], inner=None,
                     width=0.6,
                         offset=0.17, cut=1, ax=ax1,
                         color=colp,
                         linewidth=1, alpha=1, zorder=19)
-
-
-    sns.stripplot(y=df_perfo_M1['r2'],
+    sns.stripplot(y=df[metric],
                     jitter=0.08, ax=ax1,
                     color=colp,
                     linewidth=0.2, alpha=0.6, zorder=1)
-    sns.boxplot(y=df_perfo_M1['r2'], whis=np.inf, linewidth=1, ax=ax1,
+    sns.boxplot(y=df[metric], whis=np.inf, linewidth=1, ax=ax1,
                 width=0.1, boxprops={"zorder": 10, 'alpha': 0.5},
                 whiskerprops={'zorder': 10, 'alpha': 1},
                 color=colp,
                 medianprops={'zorder': 11, 'alpha': 0.9})
 
     ax1.axhline(0, linestyle='--', color='k', linewidth=0.6)
-    ax1.set_ylabel('R2', fontsize=labelfontsize, labelpad=0.7)
+    ax1.set_ylabel(metric, fontsize=labelfontsize, labelpad=0.7)
     ax1.tick_params(axis='y', labelsize=ticksfontsize)
     ax1.set_xticks([], [])
     for axis in ['top','bottom','left','right']:
         ax1.spines[axis].set_linewidth(1)
     ax1.tick_params(width=1, direction='out', length=4)
-
-
     fig1.tight_layout()
-    plt.savefig('/Users/mepicard/Documents/master_analysis/picard_feps_2022/Figures/r2_10f_violin_stripplot_boxplot_M1.svg',transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+    plt.savefig(os.path.join(path_output, f'{filename}.svg'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
 
 
 def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot'):
     """
+    Plot the regression plot associated to the model performance. One regression line will be plotted by fold
+
     Parameters
     ----------
     y_test: list
@@ -108,7 +121,9 @@ def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot'):
         list containing the values of the predicted y for each fold
     path_output: string
         path for saving the output
-
+    filename: string
+        name of the output file
+        
     Code adapted from https://github.com/mpcoll/coll_painvalue_2021/tree/main/figures
     """
     fig1, ax1 = plt.subplots(figsize=(4,4))
@@ -172,6 +187,7 @@ parser.add_argument("--path_feps", type=str, default=None)
 parser.add_argument("--path_output", type=str, default=None)
 parser.add_argument("--path_behavioral", type=str, default=None)
 parser.add_argument("--path_dot_product", type=str, default=None)
+parser.add_argument("--path_performance", type=str, default=None)
 parser.add_argument("--path_y_test", type=str, default=None)
 parser.add_argument("--path_y_pred", type=str, default=None)
 args = parser.parse_args()
@@ -219,26 +235,32 @@ if args.path_dot_product is not None:
 ########################################################################################
 #Plotting the performance of the model
 ########################################################################################
+if args.path_performance is not None:
+    df_performance = pd.read_csv(args.path_performance)
+    metric = 'pearson_r'
+    color='#fe9929'
+    filename='violin_plot'
+
+    #Violin plot visualization
+    violin_plot_performance(df_performance, metric=metric, color=color, path_output=args.path_output, filename=filename)
+
 if args.path_y_test is not None:
     #Define the parameters
     y_test = load_pickle(args.path_y_test)
     y_pred = load_pickle(args.path_y_pred)
     filename='regplot'
 
-    print(y_test)
-    print(type(y_test))
-
-    #Violin plot visualization
     #Regression plot visualization
     reg_plot_performance(y_test, y_pred, path_output=args.path_output, filename=filename)
 
 ########################################################################################
 #Plotting the signature weights
 ########################################################################################
-#Define the parameters
-coords_to_plot = {'x':[46,12,4,-4,-42],
-           'y':[-12],
-           'z':[-12,-2,20,42,54,68]}
+if args.path_feps is not None:
+    #Define the parameters
+    coords_to_plot = {'x':[46,12,4,-4,-42],
+            'y':[-12],
+            'z':[-12,-2,20,42,54,68]}
 
-#Plot the signature weights
-plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
+    #Plot the signature weights
+    plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
