@@ -131,7 +131,7 @@ args = parser.parse_args()
 
 #Define the parameters
 metric='cosine'
-permutation=True 
+permutation=True
 n_permutation=10000
 gr_mask='../masks/masker.nii.gz'
 
