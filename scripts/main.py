@@ -124,8 +124,6 @@ def main():
         reg = LinearDiscriminantAnalysis()
     elif args.reg == "rf":
         reg = RandomForestClassifier(n_estimators=4, random_state=42)
-    elif args.reg == 'huber':
-        reg = HuberRegressor(alpha=1.0)
     elif args.reg == 'linear':
         reg = LinearRegression()
     
