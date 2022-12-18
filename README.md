@@ -38,6 +38,22 @@ The visualization script can be run with [visualization.py](). The fonts and the
 Illustrator.
 
 <b>How to launch the visualization script:</b>
-<br>`python ./visualization.py --path_feps '/path/to/feps' --path_output '/path/to/output'`
-- --path_feps: specifies the path to the feps Nifti file 
+<br>`python ./visualization.py --path_output '/path/to/output' --path_feps '/path/to/feps' 
+--path_behavioral '/path/to/behavioral/measures' --path_dot_product '/path/to/dot/product' 
+--path_performance '/path/to/performance/metrics' --path_y_test 'path/to/y/test' --path_y_pred 
+'/path/to/y/pred'`
 - --path_output: specifies the path to output the figures
+- --path_feps (optional): specifies the path to the feps Nifti file. If not specified, the 
+signature weights will not be plotted 
+- --path_behavioral (optional): specified the path to the csv file containing the behavioral 
+measures
+- --path_dot_product (optional): specified the path to the npy file containing the dot product 
+values between a signature weights and the FACS scores. If not specified, the correlation between 
+the signature expression and the FACS scores will not be plotted
+ - --path_performance (optional): specifies the path to the csv file containing the 
+performance 
+metrics of the model. If not specified, the violin plot of the model performance will not be 
+plotted
+- --path_y_test (optional): specifies the path to the pickle file containing the y_test values. If 
+not specified, the regression plot of the model performance will not be plotted
+- --path_y_pred (optional): specifies the path to the pickle file containing the y_pred values
