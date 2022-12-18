@@ -20,9 +20,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import nibabel as nib
-from varname import nameof
 from itertools import combinations
-import plotly.graph_objects as go
 from argparse import ArgumentParser
 
 def load_pickle(path):
@@ -30,6 +28,14 @@ def load_pickle(path):
     object_file = pickle.load(file)
     file.close()
     return object_file
+
+def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, palette=None):
+    sns_plot=sns.lmplot(x=x,
+                        y=y,
+                        data=pd.DataFrame(np.array([signature_dot_prod, FACS]).T, columns=[x, y]),
+                        line_kws={'color': palette[idx]},
+                        scatter_kws={'color': palette[idx]})
+    plt.savefig(os.path.join(path_output, f'lmplot_{x}_expression_FACS.svg'))
 
 def plotting_signature_weights(path_signature, coords_to_plot, path_output):
     """
@@ -72,6 +78,8 @@ def plotting_signature_weights(path_signature, coords_to_plot, path_output):
 parser = ArgumentParser()
 parser.add_argument("--path_feps", type=str, default=None)
 parser.add_argument("--path_output", type=str, default=None)
+parser.add_argument("--path_behavioral", type=str, default=None)
+parser.add_argument("--path_dot_product", type=str, default=None)
 args = parser.parse_args()
 
 #Define the general parameters
@@ -98,12 +106,38 @@ hot_palette = ['#ffffe5', '#fff7bc', '#fee391', '#fec44f', '#fe9929', '#ec7014',
 hot_palette_10 = ['#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404','#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404']
 green_palette = ['#66c2a4', '#41ae76', '#238b45', '#005824']
 
-############################################################
+
+########################################################################################
+#Plotting the correlation between the signature expression and the FACS scores
+########################################################################################
+if args.path_dot_product is not None:
+    ##Define the parameters
+    behavioral_col = 'FACS'
+    df_behavioral = pd.read_csv(args.path_behavioral)
+    x = 'Pattern expression'
+    y = 'FACS score'
+    fname = 'fnames_pain'
+    pattern_expression = 'pattern_exp_values_pain'
+    idx = 0 #Adjust to change the color
+
+    load_dot_prod = loadmat(args.path_dot_product,simplify_cells=True)
+    signature_filenames, signature_dot_prod = load_dot_prod[fname], load_dot_prod[pattern_expression]
+    plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette)
+
+########################################################################################
 #Plotting the signature weights
-############################################################
+########################################################################################
 ##Define the parameters
+
 coords_to_plot = {'x':[46,12,4,-4,-42],
            'y':[-12],
            'z':[-12,-2,20,42,54,68]}
+
 #Plot the signature weights
 plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
+
+
+
+
+
+
