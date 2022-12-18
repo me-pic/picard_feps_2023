@@ -24,5 +24,10 @@ The brain signatures used for the similarity analyis can be found below:
 ## Bootstrap analysis
 
 ## Similarity analysis
+The similarity analysis can be run independently of the other scripts with [similarity.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/similarity.py)
+<br>
+<br><b>How to launch the similarity script:</b>
+<br>`python ./similarity --path_signature '/path/to/signature' --path_feps '/path/to/feps/or/any/other/signature' --path_output /path/to/output`
+
 
 ## Visualization
