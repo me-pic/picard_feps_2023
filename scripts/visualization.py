@@ -181,6 +181,17 @@ def plotting_signature_weights(path_signature, coords_to_plot, path_output):
                         transparent=True, bbox_inches='tight', dpi=600)
 
 
+def plot_similarity_from_network(similarity_feps, signature=None,row=0,col=0, ax=None, ylim=[-0.26,0.26], palette="crest", rotation=90, y='Cosine similarity',path_output=''):
+    df = pd.DataFrame({'Network':[tup[0] for tup in similarity_feps], y:[tup[1] for tup in similarity_feps]})
+    sns.barplot(data=df,x='Network', y=y, palette=palette, ax=ax[row, col]).set(title=f'{signature}')
+    ax[row, col].tick_params(axis='x',rotation=rotation)
+    if col > 0:
+        ax[row, col].set(xlabel=None, ylim=(ylim[0],ylim[1]), yticklabels=[], ylabel=None)
+    else:
+        ax[row, col].set(xlabel=None, ylim=(ylim[0],ylim[1]))
+    plt.axhline(0, color="black")
+    
+
 
 parser = ArgumentParser()
 parser.add_argument("--path_output", type=str, default=None)
@@ -190,6 +201,9 @@ parser.add_argument("--path_dot_product", type=str, default=None)
 parser.add_argument("--path_performance", type=str, default=None)
 parser.add_argument("--path_y_test", type=str, default=None)
 parser.add_argument("--path_y_pred", type=str, default=None)
+parser.add_argument("--path_siips_similarity_networks", type=str, default=None)
+parser.add_argument("--path_pvp_similarity_networks", type=str, default=None)
+parser.add_argument("--path_maths_similarity_networks", type=str, default=None)
 args = parser.parse_args()
 
 #Define the general parameters
@@ -264,3 +278,35 @@ if args.path_feps is not None:
 
     #Plot the signature weights
     plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
+
+########################################################################################
+#Spatial similarity across networks
+########################################################################################
+if args.path_siips_similarity_networks is not None:
+    #Define parameters
+    ymin = -0.26
+    ymax = 0.26
+    y = 'Cosine similarity'
+    ncols = 3
+
+    similarity_feps_siips = load_pickle(args.path_siips_similarity_networks)[0]
+    similarity_feps_pvp = load_pickle(args.path_pvp_similarity_networks)[0]
+    similarity_feps_maths = load_pickle(args.path_maths_similarity_networks)[0]
+    similarity_feps_signatures = [similarity_feps_siips,similarity_feps_pvp, similarity_feps_maths]
+    signatures = ['SIIPS-1', 'PVP', 'MAThS']
+
+    fig,ax = plt.subplots(nrows=2,ncols=ncols, sharex=False)
+    for idx, elem in enumerate(similarity_feps_signatures):
+        if idx < ncols:
+            row = 0
+            col = idx
+        else:
+            row = 1
+            col = idx-ncols
+        plot_similarity_from_network(elem, signatures[idx], row=row,col=col,ax=ax, ylim=[ymin,ymax], palette=cold_palette[1:], rotation=90, y=y)
+        
+    fig.delaxes(ax[1][0])
+    fig.delaxes(ax[1][1])
+    fig.delaxes(ax[1][2])
+    plt.tight_layout()
+    plt.savefig(os.path.join(args.path_output, f'similarity_feps_cortical_networks'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
