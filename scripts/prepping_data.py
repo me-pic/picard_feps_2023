@@ -1,3 +1,5 @@
+import os
+import json
 import numpy as np
 import nibabel as nib
 from nilearn.masking import apply_mask
@@ -5,27 +7,29 @@ from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_img
 from argparse import ArgumentParser
 
-def hdr_to_Nifti(files):
+def hdr_to_Nifti(files, path_files=''):
     """
     Convert hdr files to Nifti-like objects
 
     Parameters
     ----------
     files: list 
-        list of paths to each hdr file
+        list containing the hdr filenames
+    path_files: string
+        path to the hdr files if not already contained in files
 
     Returns
     ----------
     array: numpy.ndarray
-        array of Nifti-like objects
+        array containing Nifti-like objects
     """
     array = []
     for element in files:
-        array = np.append(array, nib.load(element))
+        array = np.append(array, nib.load(os.path.join(path_files,element)))
 
-    print('array size: ', array.shape, '\narray type: ', type(array))
+    print(f'array size: {array.shape}')
 
-    return array 
+    return array
 
 
 def extract_signal(data, mask="template", standardize = True):
@@ -49,7 +53,7 @@ def extract_signal(data, mask="template", standardize = True):
     masker_gm: numpy.ndarray
         array containing the extracted signal
 
-    See also [nilearn NifitMasker documentation](https://nilearn.github.io/dev/modules/generated/nilearn.maskers.NiftiMasker.html)
+    See also nilearn NifitMasker documentation: https://nilearn.github.io/dev/modules/generated/nilearn.maskers.NiftiMasker.html
     """
     masker_all = NiftiMasker(mask_strategy = mask,standardize=standardize, verbose = 1, reports = True)
     
@@ -78,7 +82,7 @@ def extract_signal_from_mask(data, mask):
     signal: numpy.ndarray
         extracted signal from mask
 
-    See also [nilearn masking documentation](https://nilearn.github.io/dev/modules/masking.html)
+    See also nilearn masking documentation: https://nilearn.github.io/dev/modules/masking.html
     """
     affine = data[0].affine
     resample_mask = resample_img(mask,affine)
@@ -90,7 +94,11 @@ def extract_signal_from_mask(data, mask):
 parser = ArgumentParser()
 #Path to json file
 parser.add_argument('--path_dataset', type=str, default=None)
-
-parser.add_argument('--path_output', type=str, default=None)
-parser.add_argument('--filename_output', type=str, default=None)
+#parser.add_argument('--path_output', type=str, default=None)
+#parser.add_argument('--filename_output', type=str, default=None)
 args = parser.parse_args()
+
+data = json.loads(open(args.path_dataset, 'r').read())
+signal = hdr_to_Nifti(data['data'], '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/data_MK_pain')
+
+#python ./prepping_data.py --path_dataset '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs/dataset.json'
