@@ -3,6 +3,7 @@ import nibabel as nib
 from nilearn.masking import apply_mask
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_img
+from argparse import ArgumentParser
 
 def hdr_to_Nifti(files):
     """
@@ -15,7 +16,8 @@ def hdr_to_Nifti(files):
 
     Returns
     ----------
-    array: array of Nifti-like objects
+    array: numpy.ndarray
+        array of Nifti-like objects
     """
     array = []
     for element in files:
@@ -42,10 +44,12 @@ def extract_signal(data, mask="template", standardize = True):
 
     Returns
     ----------
-    masker_all: mask of the data
-    masker_gm: array containing the extracted signal
+    masker_all: 
+        mask of the data
+    masker_gm: numpy.ndarray
+        array containing the extracted signal
 
-    See also NifitMasker documentation
+    See also [nilearn NifitMasker documentation](https://nilearn.github.io/dev/modules/generated/nilearn.maskers.NiftiMasker.html)
     """
     masker_all = NiftiMasker(mask_strategy = mask,standardize=standardize, verbose = 1, reports = True)
     
@@ -65,13 +69,16 @@ def extract_signal_from_mask(data, mask):
     Parameters
     ----------
     data: Niimg-like object
-    mask: mask to apply to the data
+        Niimg-like objects to resample
+    mask: 
+        mask to apply to the data
 
     Returns
     ----------
-    signal: extracted signal from mask
+    signal: numpy.ndarray
+        extracted signal from mask
 
-    See also nilearn masking documentation
+    See also [nilearn masking documentation](https://nilearn.github.io/dev/modules/masking.html)
     """
     affine = data[0].affine
     resample_mask = resample_img(mask,affine)
@@ -79,3 +86,11 @@ def extract_signal_from_mask(data, mask):
     print(signal.shape, type(signal))
 
     return signal
+
+parser = ArgumentParser()
+#Path to json file
+parser.add_argument('--path_dataset', type=str, default=None)
+
+parser.add_argument('--path_output', type=str, default=None)
+parser.add_argument('--filename_output', type=str, default=None)
+args = parser.parse_args()
