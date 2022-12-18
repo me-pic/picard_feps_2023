@@ -72,6 +72,7 @@ def extract_signal(data, mask="template", standardize = True, path_output='', sa
 
     return masker_all, masker_gm
 
+
 def extract_signal_from_mask(data, path_mask):
     """
     Apply a pre-computed mask to extract the signal from the data
@@ -97,6 +98,8 @@ def extract_signal_from_mask(data, path_mask):
     print(f'Signal size: {signal.shape}')
 
     return signal
+
+
 
 parser = ArgumentParser()
 parser.add_argument('--path_dataset', type=str, default=None) #Path to json file containing the dataset information

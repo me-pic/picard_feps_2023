@@ -29,6 +29,7 @@ def load_pickle(path):
     file.close()
     return object_file
 
+
 def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, palette=None):
     """
     Parameters
@@ -54,6 +55,7 @@ def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, pal
                         line_kws={'color': palette[idx]},
                         scatter_kws={'color': palette[idx]})
     plt.savefig(os.path.join(path_output, f'lmplot_{x}_expression_FACS.svg'))
+
 
 def plotting_signature_weights(path_signature, coords_to_plot, path_output):
     """

@@ -88,7 +88,6 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
         list containing the similarity metric(s) for each region/network contained in the mask
     perm_out: list
         list containing the results of the permutation for each network/region. If permutation == False, return an empty list
-    
     """
     similarity = []
     perm_out = []
