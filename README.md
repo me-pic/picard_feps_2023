@@ -29,9 +29,9 @@ The similarity analysis can be run independently of the other scripts with [simi
 <b>How to launch the similarity script:</b>
 <br>`python ./similarity.py --path_signature '/path/to/signature' --path_feps '/path/to/feps/or/any/other/signature' --path_output 
 '/path/to/output'`
-<br>- --path_signature: specifies the path to the signature Nifti file on which to compute the spatial similarity
-<br>- --path_feps: specifies the path to the feps Nifti file (or any other signature) on which to compute the spatial similarity
-<br>- --path_output: specifies the path to output the results
+- --path_signature: specifies the path to the signature Nifti file on which to compute the spatial similarity
+- --path_feps: specifies the path to the feps Nifti file (or any other signature) on which to compute the spatial similarity
+- --path_output: specifies the path to output the results
 
 ## Visualization
 The visualization script can be run with [visualization.py](). The fonts and the disposition of the figures were edited using Adobe 
