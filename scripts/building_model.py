@@ -3,9 +3,10 @@ import pandas as pd
 import scipy.stats as stats
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
-from sklearn.linear_model import Lasso, Ridge
+from sklearn.linear_model import Lasso, Ridge, LinearRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVR, SVC
-from sklearn.model_selection import train_test_split, GroupShuffleSplit, ShuffleSplit, permutation_test_score
+from sklearn.model_selection import GroupShuffleSplit, ShuffleSplit, permutation_test_score
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, accuracy_score
 
 
@@ -16,17 +17,25 @@ def split_data(X,Y,group,procedure):
 
     Parameters
     ----------
-    X: predictive variable
-    Y: predicted variable
-    group: group labels used for splitting the dataset
-    procedure: strategy to split the data
+    X: 
+        predictive variable
+    Y: 
+        predicted variable
+    group: 
+        group labels used for splitting the dataset
+    procedure: 
+        strategy to split the data
 
     Returns
     ----------
-    X_train: train set containing the predictive variable
-    X_test: test set containing the predictive variable
-    y_train: train set containing the predicted variable
-    y_test: test set containing the predicted variable
+    X_train: 
+        train set containing the predictive variable
+    X_test: 
+        test set containing the predictive variable
+    y_train: 
+        train set containing the predicted variable
+    y_test:     
+        test set containing the predicted variable
     """
     X_train = []
     y_train = []
@@ -71,14 +80,19 @@ def compute_metrics(y_test, y_pred, df, fold, print_verbose):
 
     Parameters
     ----------
-    y_test: ground truth
-    y_pred: predicted values
-    df: dataFrame containing the result of the metrics
-    fold: cross-validation fold for which the metrics are computed
+    y_test: 
+        ground truth
+    y_pred:
+        predicted values
+    df: dataFrame
+        dataFrame containing the result of the metrics
+    fold: int
+        cross-validation fold for which the metrics are computed
     
     Returns
     ----------
-    df_metrics: dataFrame containing the different metrics
+    df_metrics: dataFrame
+        dataFrame containing the different metrics
     """  
     r2 = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
@@ -101,12 +115,18 @@ def reg_PCA(n_component, reg = Lasso()):
     """
     Parameters
     ----------
-    n_component: number of components to keep in the PCA
+    n_component: int or float
+        number of components to keep in the PCA
 
     Returns
     ----------
-    pipe: pipeline to apply PCA and Lasso regression sequentially
+    pipe: 
+        pipeline to apply PCA and Lasso regression sequentially
+
+    See also sklearn PCA documentation: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    See also sklearn Pipeline documentation: https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html
     """
+
     estimators = [('reduce_dim', PCA(n_component)), ('clf', reg)] 
     pipe = Pipeline(estimators)
     return pipe
@@ -120,25 +140,41 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
 
     Parameters
     ----------
-    X: predictive variable
-    y: predicted variable
-    gr: grouping variable
-    reg: regression technique to perform
-    splits: number of split for the cross-validation 
-    test_size: percentage of the data in the test set
-    n_components: number of components to keep for the PCA
-    random_seed: controls the randomness of the train/test splits
-    print_verbose: either or not the verbose is printed
+    X: 
+        predictive variable
+    y: 
+        predicted variable
+    gr: 
+        grouping variable
+    reg: 
+        regression technique to perform
+    splits: int
+        number of split for the cross-validation 
+    test_size: float
+        percentage of the data in the test set
+    n_components: int or float
+        number of components to keep for the PCA
+    random_seed: int
+        controls the randomness of the train/test splits
+    print_verbose: bool
+        either or not the verbose is printed
 
     Returns
     ----------
-    X_train: list containing the training sets of the predictive variable
-    y_train: list containing the training sets of the predictive variable
-    X_test: list containing the training sets of the predictive variable
-    y_test: list containing the training sets of the predictive variable
-    y_pred: list containing the predicted values for each fold
-    model_voxel: list of arrays containing the coefficients of the model in the voxel space 
-    df_metrics: DataFrame containing different metrics for each fold
+    X_train: list
+        list containing the training sets of the predictive variable
+    y_train: list
+        list containing the training sets of the predictive variable
+    X_test: list
+        list containing the training sets of the predictive variable
+    y_test: list
+        list containing the training sets of the predictive variable
+    y_pred: list
+        list containing the predicted values for each fold
+    model_voxel: 
+        list of arrays containing the coefficients of the model in the voxel space 
+    df_metrics: dataFrame
+        dataFrame containing different metrics for each fold
     """ 
     #Initialize the variables
     y_pred = []
@@ -152,8 +188,8 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
         X_train, X_test, y_train, y_test = split_data(X, y, procedure=shuffle_method)
     else: 
     	shuffle_method = GroupShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)  
-    	X_train, X_test, y_train, y_test = split_data(X, y, gr, shuffle_method)
-
+        X_train, X_test, y_train, y_test = split_data(X, y, gr, shuffle_method)
+    
     if print_verbose:
         verbose(splits, X_train, X_test, y_train, y_test, X_verbose = True, y_verbose = True)
 
