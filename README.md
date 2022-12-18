@@ -38,4 +38,6 @@ The visualization script can be run with [visualization.py](). The fonts and the
 Illustrator.
 
 <b>How to launch the visualization script:</b>
-<br>`python ./visualization.py`
+<br>`python ./visualization.py --path_feps '/path/to/feps' --path_output '/path/to/output'`
+- --path_feps: specifies the path to the feps Nifti file 
+- --path_output: specifies the path to output the figures
