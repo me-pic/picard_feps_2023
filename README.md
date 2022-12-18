@@ -31,7 +31,8 @@ The similarity analysis can be run independently of the other scripts with [simi
 
 
 ## Visualization
-The visualization script can be run with [visualization.py]()
+The visualization script can be run with [visualization.py](). The fonts and the disposition of the figures were edited using Adobe 
+Illustrator.
 
 <b>How to launch the visualization script:</b>
 <br>`python ./visualization.py`
