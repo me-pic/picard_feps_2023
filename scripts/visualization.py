@@ -183,8 +183,8 @@ def plotting_signature_weights(path_signature, coords_to_plot, path_output):
 
 
 parser = ArgumentParser()
-parser.add_argument("--path_feps", type=str, default=None)
 parser.add_argument("--path_output", type=str, default=None)
+parser.add_argument("--path_feps", type=str, default=None)
 parser.add_argument("--path_behavioral", type=str, default=None)
 parser.add_argument("--path_dot_product", type=str, default=None)
 parser.add_argument("--path_performance", type=str, default=None)
