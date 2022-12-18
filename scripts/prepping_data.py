@@ -1,10 +1,8 @@
 import numpy as np
-import pandas as pd
 import nibabel as nib
 from nilearn.masking import apply_mask
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_img
-from sklearn.preprocessing import FunctionTransformer
 
 def hdr_to_Nifti(files):
     """
