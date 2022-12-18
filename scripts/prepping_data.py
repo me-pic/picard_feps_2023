@@ -32,7 +32,7 @@ def hdr_to_Nifti(files, path_files=''):
     return array
 
 
-def extract_signal(data, mask="template", standardize = True):
+def extract_signal(data, mask="template", standardize = True, path_output='', save = False):
     """
     Apply a mask to extract the signal from the data and save the mask
     in a html format
@@ -45,28 +45,34 @@ def extract_signal(data, mask="template", standardize = True):
         strategy to compute the mask. By default the gray matter is extracted based on the MNI152 brain mask
     standardize: bool
         strategy to standardize the signal. The signal is z-scored by default
+    path_output: string
+        path for saving the output(s)
+    save: bool
+        if True, the generated mask is saved in a nii.gz file in path_output. Otherwise the mask is not saved
 
     Returns
     ----------
-    masker_all: 
-        mask of the data
+    masker_all: NiftiMasker object
+        mask generated from the data
     masker_gm: numpy.ndarray
         array containing the extracted signal
 
     See also nilearn NifitMasker documentation: https://nilearn.github.io/dev/modules/generated/nilearn.maskers.NiftiMasker.html
     """
     masker_all = NiftiMasker(mask_strategy = mask,standardize=standardize, verbose = 1, reports = True)
-    
     masker_gm = masker_all.fit_transform(data)
-    print("mean: ", round(masker_gm.mean(),2), "\nstd: ", round(masker_gm.std(),2))
-    print("Signal size: ", masker_gm.shape)
+    print(f'mean: {round(masker_gm.mean(),2)}, \nstd: {round(masker_gm.std(),2)}')
+    print(f'Signal size: {masker_gm.shape}')
 
     report = masker_all.generate_report()
-    report.save_as_html("masker_report.html")
+    report.save_as_html(os.path.join(path_output, 'masker_report.html'))
+
+    if save:
+        nib.save(masker_all.mask_img_, os.path.join(path_output, 'masker.nii.gz'))
 
     return masker_all, masker_gm
 
-def extract_signal_from_mask(data, mask):
+def extract_signal_from_mask(data, path_mask):
     """
     Apply a pre-computed mask to extract the signal from the data
 
@@ -74,8 +80,8 @@ def extract_signal_from_mask(data, mask):
     ----------
     data: Niimg-like object
         Niimg-like objects to resample
-    mask: 
-        mask to apply to the data
+    path_mask: string
+        path of mask to apply to the data
 
     Returns
     ----------
@@ -84,6 +90,7 @@ def extract_signal_from_mask(data, mask):
 
     See also nilearn masking documentation: https://nilearn.github.io/dev/modules/masking.html
     """
+    mask = nib.load(path_mask)
     affine = data[0].affine
     resample_mask = resample_img(mask,affine)
     signal = apply_mask(data, resample_mask, ensure_finite=True)
@@ -94,11 +101,16 @@ def extract_signal_from_mask(data, mask):
 parser = ArgumentParser()
 #Path to json file
 parser.add_argument('--path_dataset', type=str, default=None)
-#parser.add_argument('--path_output', type=str, default=None)
-#parser.add_argument('--filename_output', type=str, default=None)
+parser.add_argument('--path_mask', type=str, default=None)
+parser.add_argument('--path_output', type=str, default=None)
 args = parser.parse_args()
 
 data = json.loads(open(args.path_dataset, 'r').read())
 signal = hdr_to_Nifti(data['data'], '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/data_MK_pain')
 
-#python ./prepping_data.py --path_dataset '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs/dataset.json'
+if args.path_mask is not None:
+    extract_signal_from_mask(signal, args.path_mask)
+else:
+    masker, X = extract_signal(signal, mask="template", standardize = True, path_output=args.path_output, save = True)
+    
+#python ./prepping_data.py --path_dataset '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs/dataset.json' --path_output '/Users/mepicard/Documents/master_analysis/picard_feps_2022_outputs'
