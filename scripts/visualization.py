@@ -108,6 +108,8 @@ def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot'):
         list containing the values of the predicted y for each fold
     path_output: string
         path for saving the output
+
+    Code adapted from https://github.com/mpcoll/coll_painvalue_2021/tree/main/figures
     """
     fig1, ax1 = plt.subplots(figsize=(4,4))
     ax1.set_xlim([0,42])
