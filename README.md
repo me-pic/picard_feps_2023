@@ -18,10 +18,16 @@ The brain signatures used for the similarity analyis can be found below:
 - [MAThS](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2021_Ceko_MPA2_multiaversive) 
 
 ## LASSO-PCR analysis
+<b>How to run the LASSO-PCR analysis:</b>
+<br>`python ./main.py`
 
 ## Permutation tests
+<b>How to run the permutation tests:</b>
+<br>`python ./main.py`
 
-## Bootstrap analysis
+## Bootstrap tests
+<b>How to run the bootstrap tests:</b>
+<br>`python ./main.py`
 
 ## Similarity analysis
 The similarity analysis can be run independently of the other scripts with [similarity.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/similarity.py)
