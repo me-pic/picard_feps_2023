@@ -76,14 +76,15 @@ def save_to_json(dataframe, id, target, group, files, path_output, filename_outp
         print("Cannot save to json: fmri and behavioral data are not in the same order")
 
 
-parser = ArgumentParser()
-parser.add_argument('--path_behavioral', type=str, default=None)
-parser.add_argument('--path_fmri', type=str, default=None)
-parser.add_argument('--path_output', type=str, default=None)
-parser.add_argument('--filename_output', type=str, default=None)
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument('--path_behavioral', type=str, default=None)
+    parser.add_argument('--path_fmri', type=str, default=None)
+    parser.add_argument('--path_output', type=str, default=None)
+    parser.add_argument('--filename_output', type=str, default=None)
+    args = parser.parse_args()
 
-df = pd.read_csv(args.path_behavioral)
-hdr_files = read_files(args.path_fmri)
+    df = pd.read_csv(args.path_behavioral)
+    hdr_files = read_files(args.path_fmri)
 
-save_to_json(df, 'CODE', 'FACS', 'GROUP', hdr_files, args.path_output)
+    save_to_json(df, 'CODE', 'FACS', 'GROUP', hdr_files, args.path_output)

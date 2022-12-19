@@ -121,40 +121,40 @@ def similarity_across_networks(path_signature, path_feps, path_mask, labels=None
     return similarity, perm_out
 
 
+if __name__ == "__main__":
+    #Arguments to pass to the script
+    parser = ArgumentParser()
+    parser.add_argument('--path_signature', type=str, default=None)
+    parser.add_argument('--path_feps', type=str, default=None)
+    parser.add_argument('--path_output', type=str, default=None)
+    args = parser.parse_args()
 
-#Arguments to pass to the script
-parser = ArgumentParser()
-parser.add_argument('--path_signature', type=str, default=None)
-parser.add_argument('--path_feps', type=str, default=None)
-parser.add_argument('--path_output', type=str, default=None)
-args = parser.parse_args()
+    #Define the parameters
+    metric='cosine'
+    permutation=True
+    n_permutation=10000
+    gr_mask='../masks/masker.nii.gz'
 
-#Define the parameters
-metric='cosine'
-permutation=True
-n_permutation=10000
-gr_mask='../masks/masker.nii.gz'
+    #Compute the spatial similarity between signatures defined in path_signature and path_feps
+    similarity_signatures = similarity(args.path_signature, args.path_feps, gr_mask, metric=None)
+    #Save the output
+    with open(os.path.join(args.path_output, f"spatial_similarity_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+        pickle.dump(similarity_signatures, output_file)
+    output_file.close()
 
-#Compute the spatial similarity between signatures defined in path_signature and path_feps
-similarity_signatures = similarity(args.path_signature, args.path_feps, gr_mask, metric=None)
-#Save the output
-with open(os.path.join(args.path_output, f"spatial_similarity_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
-    pickle.dump(similarity_signatures, output_file)
-output_file.close()
+    #Load the altas
+    atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
+    atlas_yeo = atlas_yeo_2011.thick_7
+    labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Attention', 'Limbic', 'Frontoparietal', 'Default']
 
-#Load the altas
-atlas_yeo_2011 = datasets.fetch_atlas_yeo_2011()
-atlas_yeo = atlas_yeo_2011.thick_7
-labels_cortical  = ['Visual', 'Somatosensory', 'Dorsal Attention', 'Ventral Attention', 'Limbic', 'Frontoparietal', 'Default']
+    #Separated the atlas networks according to their index
+    separated_regions = []
+    for i in range(1,len(labels_cortical)+1):
+        separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
 
-#Separated the atlas networks according to their index
-separated_regions = []
-for i in range(1,len(labels_cortical)+1):
-    separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
-
-#Compute the spatial similarity across the cortical networks
-similarity_cortical, perm_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
-#Save the output
-with open(os.path.join(args.path_output, f"spatial_similarity_cortical_networks_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
-    pickle.dump([similarity_cortical, perm_cortical], output_file)
-output_file.close()
+    #Compute the spatial similarity across the cortical networks
+    similarity_cortical, perm_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
+    #Save the output
+    with open(os.path.join(args.path_output, f"spatial_similarity_cortical_networks_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
+        pickle.dump([similarity_cortical, perm_cortical], output_file)
+    output_file.close()

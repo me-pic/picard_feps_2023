@@ -199,133 +199,132 @@ def plot_similarity_from_network(similarity_feps, signature=None,row=0,col=0, ax
         ax[row, col].set(xlabel=None, ylim=(ylim[0],ylim[1]))
     plt.axhline(0, color="black")
     
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("--path_output", type=str, default=None)
+    parser.add_argument("--path_feps", type=str, default=None)
+    parser.add_argument("--path_behavioral", type=str, default=None)
+    parser.add_argument("--path_dot_product", type=str, default=None)
+    parser.add_argument("--path_performance", type=str, default=None)
+    parser.add_argument("--path_y_test", type=str, default=None)
+    parser.add_argument("--path_y_pred", type=str, default=None)
+    parser.add_argument("--path_siips_similarity_networks", type=str, default=None)
+    parser.add_argument("--path_pvp_similarity_networks", type=str, default=None)
+    parser.add_argument("--path_maths_similarity_networks", type=str, default=None)
+    parser.add_argument("--path_similarity_matrix", type=str, default=None)
+    args = parser.parse_args()
+
+    #Define the general parameters
+    sns.set_context("talk")
+
+    params = {'legend.fontsize': 'large',
+            'figure.figsize': (10,10),
+            'font.size': 10,
+            'figure.dpi': 300,
+            'axes.labelsize': 'x-large',
+            'axes.titlesize':'large',
+            'xtick.labelsize':12,
+            'ytick.labelsize':12,
+            'axes.spines.right': False,
+            'axes.spines.top': False}
+
+    plt.rcParams.update(params)
+
+    #Define color palettes
+    ##The colors were chosen from: https://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=5
+    cold_palette = ['#ffffd9', '#edf8b1', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#0c2c84']
+    cold_palette_10 = ['#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494','#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494']
+    hot_palette = ['#ffffe5', '#fff7bc', '#fee391', '#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#8c2d04']
+    hot_palette_10 = ['#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404','#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404']
+    green_palette = ['#66c2a4', '#41ae76', '#238b45', '#005824']
 
 
-parser = ArgumentParser()
-parser.add_argument("--path_output", type=str, default=None)
-parser.add_argument("--path_feps", type=str, default=None)
-parser.add_argument("--path_behavioral", type=str, default=None)
-parser.add_argument("--path_dot_product", type=str, default=None)
-parser.add_argument("--path_performance", type=str, default=None)
-parser.add_argument("--path_y_test", type=str, default=None)
-parser.add_argument("--path_y_pred", type=str, default=None)
-parser.add_argument("--path_siips_similarity_networks", type=str, default=None)
-parser.add_argument("--path_pvp_similarity_networks", type=str, default=None)
-parser.add_argument("--path_maths_similarity_networks", type=str, default=None)
-parser.add_argument("--path_similarity_matrix", type=str, default=None)
-args = parser.parse_args()
+    ########################################################################################
+    #Plotting the correlation between the signature expression and the FACS scores
+    ########################################################################################
+    if args.path_dot_product is not None:
+        #Define the parameters
+        behavioral_col = 'FACS'
+        df_behavioral = pd.read_csv(args.path_behavioral)
+        x = 'Pattern expression'
+        y = 'FACS score'
+        idx = 0 #Adjust to change the color
 
-#Define the general parameters
-sns.set_context("talk")
+        #Plot the correlation 
+        signature_dot_prod=np.load(args.path_dot_product)
+        plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette)
 
-params = {'legend.fontsize': 'large',
-          'figure.figsize': (10,10),
-          'font.size': 10,
-          'figure.dpi': 300,
-          'axes.labelsize': 'x-large',
-          'axes.titlesize':'large',
-          'xtick.labelsize':12,
-          'ytick.labelsize':12,
-          'axes.spines.right': False,
-          'axes.spines.top': False}
+    ########################################################################################
+    #Plotting the performance of the model
+    ########################################################################################
+    if args.path_performance is not None:
+        df_performance = pd.read_csv(args.path_performance)
+        metric = 'pearson_r'
+        color='#fe9929'
+        filename='violin_plot'
 
-plt.rcParams.update(params)
+        #Violin plot visualization
+        violin_plot_performance(df_performance, metric=metric, color=color, path_output=args.path_output, filename=filename)
 
-#Define color palettes
-##The colors were chosen from: https://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=5
-cold_palette = ['#ffffd9', '#edf8b1', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#0c2c84']
-cold_palette_10 = ['#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494','#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494']
-hot_palette = ['#ffffe5', '#fff7bc', '#fee391', '#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#8c2d04']
-hot_palette_10 = ['#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404','#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404']
-green_palette = ['#66c2a4', '#41ae76', '#238b45', '#005824']
+    if args.path_y_test is not None:
+        #Define the parameters
+        y_test = load_pickle(args.path_y_test)
+        y_pred = load_pickle(args.path_y_pred)
+        filename='regplot'
 
+        #Regression plot visualization
+        reg_plot_performance(y_test, y_pred, path_output=args.path_output, filename=filename)
 
-########################################################################################
-#Plotting the correlation between the signature expression and the FACS scores
-########################################################################################
-if args.path_dot_product is not None:
-    #Define the parameters
-    behavioral_col = 'FACS'
-    df_behavioral = pd.read_csv(args.path_behavioral)
-    x = 'Pattern expression'
-    y = 'FACS score'
-    idx = 0 #Adjust to change the color
+    ########################################################################################
+    #Plotting the signature weights
+    ########################################################################################
+    if args.path_feps is not None:
+        #Define the parameters
+        coords_to_plot = {'x':[46,12,4,-4,-42],
+                'y':[-12],
+                'z':[-12,-2,20,42,54,68]}
 
-    #Plot the correlation 
-    signature_dot_prod=np.load(args.path_dot_product)
-    plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette)
+        #Plot the signature weights
+        plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
 
-########################################################################################
-#Plotting the performance of the model
-########################################################################################
-if args.path_performance is not None:
-    df_performance = pd.read_csv(args.path_performance)
-    metric = 'pearson_r'
-    color='#fe9929'
-    filename='violin_plot'
+    ########################################################################################
+    #Spatial similarity matrix
+    ########################################################################################
+    if args.path_similarity_matrix is not None:
+        #Definie parameters
+        labels = ['FEPS', 'NPS', 'SIIPS-1', 'PVP', 'MAThS']
 
-    #Violin plot visualization
-    violin_plot_performance(df_performance, metric=metric, color=color, path_output=args.path_output, filename=filename)
+        similarity_matrix = np.load(args.path_similarity_matrix)
+        plot_similarity_matrix(similarity_matrix, labels, args.path_output)
 
-if args.path_y_test is not None:
-    #Define the parameters
-    y_test = load_pickle(args.path_y_test)
-    y_pred = load_pickle(args.path_y_pred)
-    filename='regplot'
+    ########################################################################################
+    #Spatial similarity across networks
+    ########################################################################################
+    if args.path_siips_similarity_networks is not None:
+        #Define parameters
+        ymin = -0.26
+        ymax = 0.26
+        y = 'Cosine similarity'
+        ncols = 3
 
-    #Regression plot visualization
-    reg_plot_performance(y_test, y_pred, path_output=args.path_output, filename=filename)
+        similarity_feps_siips = load_pickle(args.path_siips_similarity_networks)[0]
+        similarity_feps_pvp = load_pickle(args.path_pvp_similarity_networks)[0]
+        similarity_feps_maths = load_pickle(args.path_maths_similarity_networks)[0]
+        similarity_feps_signatures = [similarity_feps_siips,similarity_feps_pvp, similarity_feps_maths]
+        signatures = ['SIIPS-1', 'PVP', 'MAThS']
 
-########################################################################################
-#Plotting the signature weights
-########################################################################################
-if args.path_feps is not None:
-    #Define the parameters
-    coords_to_plot = {'x':[46,12,4,-4,-42],
-            'y':[-12],
-            'z':[-12,-2,20,42,54,68]}
-
-    #Plot the signature weights
-    plotting_signature_weights(args.path_feps, coords_to_plot, args.path_output)
-
-########################################################################################
-#Spatial similarity matrix
-########################################################################################
-if args.path_similarity_matrix is not None:
-    #Definie parameters
-    labels = ['FEPS', 'NPS', 'SIIPS-1', 'PVP', 'MAThS']
-
-    similarity_matrix = np.load(args.path_similarity_matrix)
-    plot_similarity_matrix(similarity_matrix, labels, args.path_output)
-
-########################################################################################
-#Spatial similarity across networks
-########################################################################################
-if args.path_siips_similarity_networks is not None:
-    #Define parameters
-    ymin = -0.26
-    ymax = 0.26
-    y = 'Cosine similarity'
-    ncols = 3
-
-    similarity_feps_siips = load_pickle(args.path_siips_similarity_networks)[0]
-    similarity_feps_pvp = load_pickle(args.path_pvp_similarity_networks)[0]
-    similarity_feps_maths = load_pickle(args.path_maths_similarity_networks)[0]
-    similarity_feps_signatures = [similarity_feps_siips,similarity_feps_pvp, similarity_feps_maths]
-    signatures = ['SIIPS-1', 'PVP', 'MAThS']
-
-    fig,ax = plt.subplots(nrows=2,ncols=ncols, sharex=False)
-    for idx, elem in enumerate(similarity_feps_signatures):
-        if idx < ncols:
-            row = 0
-            col = idx
-        else:
-            row = 1
-            col = idx-ncols
-        plot_similarity_from_network(elem, signatures[idx], row=row,col=col,ax=ax, ylim=[ymin,ymax], palette=cold_palette[1:], rotation=90, y=y)
-        
-    fig.delaxes(ax[1][0])
-    fig.delaxes(ax[1][1])
-    fig.delaxes(ax[1][2])
-    plt.tight_layout()
-    plt.savefig(os.path.join(args.path_output, f'similarity_feps_cortical_networks'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+        fig,ax = plt.subplots(nrows=2,ncols=ncols, sharex=False)
+        for idx, elem in enumerate(similarity_feps_signatures):
+            if idx < ncols:
+                row = 0
+                col = idx
+            else:
+                row = 1
+                col = idx-ncols
+            plot_similarity_from_network(elem, signatures[idx], row=row,col=col,ax=ax, ylim=[ymin,ymax], palette=cold_palette[1:], rotation=90, y=y)
+            
+        fig.delaxes(ax[1][0])
+        fig.delaxes(ax[1][1])
+        fig.delaxes(ax[1][2])
+        plt.tight_layout()
+        plt.savefig(os.path.join(args.path_output, f'similarity_feps_cortical_networks'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
