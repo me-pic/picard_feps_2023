@@ -4,8 +4,7 @@ import scipy.stats as stats
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
 from sklearn.linear_model import Lasso, Ridge, LinearRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVR, SVC
+from sklearn.svm import SVR
 from sklearn.model_selection import GroupShuffleSplit, ShuffleSplit, permutation_test_score
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, accuracy_score
 
@@ -17,24 +16,24 @@ def split_data(X,Y,group,procedure):
 
     Parameters
     ----------
-    X: 
+    X: numpy.ndarray
         predictive variable
-    Y: 
+    Y: numpy.ndarray
         predicted variable
-    group: 
+    group: numpy.ndarray
         group labels used for splitting the dataset
-    procedure: 
+    procedure: model_selection method 
         strategy to split the data
 
     Returns
     ----------
-    X_train: 
+    X_train: list 
         train set containing the predictive variable
-    X_test: 
+    X_test: list 
         test set containing the predictive variable
-    y_train: 
+    y_train: list
         train set containing the predicted variable
-    y_test:     
+    y_test: list    
         test set containing the predicted variable
     """
     X_train = []
@@ -56,13 +55,20 @@ def verbose(splits, X_train, X_test, y_train, y_test, X_verbose = True, y_verbos
    
     Parameters
     ----------
-    splits: number of splits used for the cross-validation
-    X_train: train set containing the predictive variable
-    X_test: test set containing the predictive variable
-    y_train: train set containing the predicted variable
-    y_test: test set containing the predicted variable
-    X_verbose (boolean): if X_verbose == True, print the descriptive stats for the X (train and test)
-    y_verbose (boolean): if y_verbose == True, print the descriptive stats for the y (train and test)
+    splits: int
+        number of splits used for the cross-validation
+    X_train: list
+        train set containing the predictive variable
+    X_test: list
+        test set containing the predictive variable
+    y_train: list
+        train set containing the predicted variable
+    y_test: list
+        test set containing the predicted variable
+    X_verbose: boolean
+        if X_verbose == True, print the descriptive stats for the X (train and test)
+    y_verbose: boolean
+        if y_verbose == True, print the descriptive stats for the y (train and test)
     """
     for i in range(splits):
         if X_verbose:
@@ -80,9 +86,9 @@ def compute_metrics(y_test, y_pred, df, fold, print_verbose):
 
     Parameters
     ----------
-    y_test: 
+    y_test: numpy.ndarray
         ground truth
-    y_pred:
+    y_pred: numpy.ndarray
         predicted values
     df: dataFrame
         dataFrame containing the result of the metrics
@@ -116,11 +122,11 @@ def reg_PCA(n_component, reg = Lasso()):
     Parameters
     ----------
     n_component: int or float
-        number of components to keep in the PCA
+        number of components (or percentage) to keep in the PCA
 
     Returns
     ----------
-    pipe: 
+    pipe: Pipeline object
         pipeline to apply PCA and Lasso regression sequentially
 
     See also sklearn PCA documentation: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
@@ -140,20 +146,20 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
 
     Parameters
     ----------
-    X: 
+    X: numpy.ndarray
         predictive variable
-    y: 
+    y: numpy.ndarray
         predicted variable
-    gr: 
+    gr: numpy.ndarray
         grouping variable
-    reg: 
+    reg: linear_model method
         regression technique to perform
     splits: int
         number of split for the cross-validation 
     test_size: float
         percentage of the data in the test set
     n_components: int or float
-        number of components to keep for the PCA
+        number of components (or percentage) to keep for the PCA
     random_seed: int
         controls the randomness of the train/test splits
     print_verbose: bool
@@ -171,7 +177,7 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
         list containing the training sets of the predictive variable
     y_pred: list
         list containing the predicted values for each fold
-    model_voxel: 
+    model_voxel: list
         list of arrays containing the coefficients of the model in the voxel space 
     df_metrics: dataFrame
         dataFrame containing different metrics for each fold
@@ -186,8 +192,8 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
     if gr == None:
         shuffle_method = ShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)
         X_train, X_test, y_train, y_test = split_data(X, y, procedure=shuffle_method)
-    else: 
-    	shuffle_method = GroupShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)  
+    else:
+        shuffle_method = GroupShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)  
         X_train, X_test, y_train, y_test = split_data(X, y, gr, shuffle_method)
     
     if print_verbose:
@@ -211,50 +217,6 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
     return X_train, y_train, X_test, y_test, y_pred, model, model_voxel
 
 
-def train_test_classify(X, y, gr, C=1.0):
-    """
-    Build and evaluate a classification model
-    
-    Parameters
-    ----------
-    X: predictive variable
-    y: predicted variable (binary variable)
-    gr: grouping variable
-    C: regularization parameter
-
-    Returns
-    ----------
-    model: list containing the classifier model for each fold
-    accuracy: list containing the classifier accuracy across the folds
-
-    See also scikit-learn SVC documentation
-    """
-    #Initialize the variables
-    y_pred = []
-    model = []
-    accuracy = []
-
-    #Strategy to split the data
-    if gr == None:
-        shuffle_method = ShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)    
-        X_train, X_test, y_train, y_test = split_data(X, y, shuffle_method)
-    else:
-        shuffle_method = GroupShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)    
-        X_train, X_test, y_train, y_test = split_data(X, y, gr, shuffle_method)
-
-    for i in range(splits):
-        ###Build and test the model###
-        print("----------------------------")
-        print("Training model")
-        model_clf = SVC(C=C, kernel="linear")
-        model.append(model_clf.fit(X_train[i], y_train[i]))
-        y_pred.append(model[i].predict(X_test[i]))
-        ###Scores###
-        accuracy.append(accuracy_score(y_test, y_pred))
-
-    return X_train, y_train, X_test, y_test, y_pred, model, accuracy
-
-
 def compute_permutation(X, y, gr, reg, n_components=0.80, n_permutations=5000, scoring="r2", random_seed=42):
     """
     Compute the permutation test for a specified metric (r2 by default)
@@ -262,19 +224,29 @@ def compute_permutation(X, y, gr, reg, n_components=0.80, n_permutations=5000, s
 
     Parameters
     ----------
-    X: predictive variable
-    y: predicted variable
-    gr: grouping variable
-    n_components: number of components to keep for the PCA
-    n_permutations: number of permuted iteration
-    scoring: scoring strategy
-    random_seed: controls the randomness
+    X: numpy.ndarray
+        predictive variable
+    y: numpy.ndarray
+        predicted variable
+    gr: numpy.ndarray
+        grouping variable
+    n_components: int or float
+        number of components (or percentage) to keep for the PCA
+    n_permutations: int
+        number of permuted iteration
+    scoring: string
+        scoring strategy
+    random_seed: int
+        controls the randomness
 
     Returns
     ----------
-    score (float): true score
-    perm_scores (ndarray): scores for each permuted samples
-    pvalue (float): probability that the true score can be obtained by chance
+    score: float
+        true score
+    perm_scores: numpy.ndarray
+        scores for each permuted samples
+    pvalue: float
+        probability that the true score can be obtained by chance
 
     See also scikit-learn permutation_test_score documentation
     """
@@ -288,27 +260,6 @@ def compute_permutation(X, y, gr, reg, n_components=0.80, n_permutations=5000, s
     return score, perm_scores, pvalue
 
 
-def predict_on_test(X_train, y_train, X_test, y_test, reg):
-    """
-    Test the generability of a regression model on left out data
-    
-    Parameters
-    ----------
-    X_train: predictive variable to fit the model
-    y_train: predicted variable to fit the model
-    X_test: predictive variable to predict the model
-    y_test: predicted variable to predict the model
-    reg: regression technique to perform
-    
-    Returns
-    ----------
-    r2: metric to evaluate the performance of the model
-    """
-    final_model = reg.fit(X_train, y_train)
-    r2 = r2_score(y_test, final_model.predict(X_test))
-    
-    return r2
-
 def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resampling=1000,njobs=5):
     """
     Split the data according to the group parameters
@@ -316,19 +267,29 @@ def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resamp
 
     Parameters
     ----------
-    X: predictive variable (array-like)
-    Y: predicted variable (array-like)
-    gr: group labels used for splitting the dataset (array-like)
-    reg: regression strategy to use 
-    splits: number of split for the cross-validation 
-    test_size: percentage of the data in the test set
-    n_components: number of components (or percentage) to include in the PCA 
-    n_resampling: number of resampling subsets
-    njobs: number of jobs to run in parallel
+    X: numpy.ndarray
+        predictive variable
+    Y: numpy.ndarray
+        predicted variable
+    gr: numpy.ndarray
+        group labels used for splitting the dataset
+    reg: linear_model method
+        regression strategy to use 
+    splits: int
+        number of split for the cross-validation 
+    test_size: float
+        percentage of the data in the test set
+    n_components: int or float
+        number of components (or percentage) to include in the PCA 
+    n_resampling: int
+        number of resampling subsets
+    njobs: int
+        number of jobs to run in parallel
 
     Returns
     ----------
-    bootarray: 2D array containing regression coefficients at voxel level for each resampling (array-like)
+    bootarray: numpy.ndarray
+        2D array containing regression coefficients at voxel level for each resampling (array-like)
     """
 
     procedure = GroupShuffleSplit(n_splits=splits,test_size=test_size)
@@ -350,6 +311,7 @@ def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resamp
     
     return bootarray
 
+
 def _bootstrap_test(X,y,gr,reg,procedure,n_components):
     """
     Split the data according to the group parameters
@@ -357,16 +319,23 @@ def _bootstrap_test(X,y,gr,reg,procedure,n_components):
 
     Parameters
     ----------
-    X: predictive variable
-    y: predicted variable
-    gr: group labels used for splitting the dataset
-    reg: regression strategy to use
-    procedure: strategy to split the data
-    n_components: number of components (or percentage) to include in the PCA
+    X: numpy.ndarray
+        predictive variable
+    y: numpy.ndarray
+        predicted variable
+    gr: numpy.ndarray
+        group labels used for splitting the dataset
+    reg: linear_model method
+        regression strategy to use
+    procedure: model_selection method
+        strategy to split the data
+    n_components: int or float
+        number of components (or percentage) to include in the PCA
 
     Returns
     ----------
-    coefs_voxel: regression coefficients for each voxel
+    coefs_voxel: list
+        regression coefficients for each voxel
     """
     coefs_voxel = []
     #Random sample
