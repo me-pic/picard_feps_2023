@@ -181,7 +181,31 @@ def plotting_signature_weights(path_signature, coords_to_plot, path_output):
                         transparent=True, bbox_inches='tight', dpi=600)
 
 
-def plot_similarity_from_network(similarity_feps, signature=None,row=0,col=0, ax=None, ylim=[-0.26,0.26], palette="crest", rotation=90, y='Cosine similarity',path_output=''):
+def plot_similarity_matrix(similarity_matrix, labels, path_output):
+    """
+    Parameters
+    ----------
+    similarity_matrix: numpy.ndarray
+        array containing the similarities values between pain-related signatures
+
+    labels: list
+        list containing the name of the signatures
+    path_output: string
+        path for saving the output(s)
+    """
+    # Create a mask
+    mask = np.triu(np.ones_like(similarity_matrix, dtype=bool))
+
+    fig = plt.figure(figsize=(16, 12))
+    sns.heatmap(similarity_matrix, mask=mask, center=0, annot=False,
+                fmt='.2f', square=True, cmap=sns.diverging_palette(220, 20, as_cmap=True), vmin=-0.10, vmax=0.10)
+    plt.xticks(np.arange(6) + .5,labels=labels)
+    plt.yticks(np.arange(6) + .5,labels=labels)
+    plt.show()
+    fig.savefig(os.path.join(path_output, 'similarity_matrix_full_brain.svg'),transparent=True, bbox_inches='tight', facecolor='white', dpi=600)
+
+
+def plot_similarity_from_network(similarity_feps, signature=None,row=0,col=0, ax=None, ylim=[-0.26,0.26], palette="crest", rotation=90, y='Cosine similarity'):
     df = pd.DataFrame({'Network':[tup[0] for tup in similarity_feps], y:[tup[1] for tup in similarity_feps]})
     sns.barplot(data=df,x='Network', y=y, palette=palette, ax=ax[row, col]).set(title=f'{signature}')
     ax[row, col].tick_params(axis='x',rotation=rotation)
@@ -204,6 +228,7 @@ parser.add_argument("--path_y_pred", type=str, default=None)
 parser.add_argument("--path_siips_similarity_networks", type=str, default=None)
 parser.add_argument("--path_pvp_similarity_networks", type=str, default=None)
 parser.add_argument("--path_maths_similarity_networks", type=str, default=None)
+parser.add_argument("--path_similarity_matrix", type=str, default=None)
 args = parser.parse_args()
 
 #Define the general parameters
@@ -282,7 +307,12 @@ if args.path_feps is not None:
 ########################################################################################
 #Spatial similarity matrix
 ########################################################################################
+if args.path_similarity_matrix is not None:
+    #Definie parameters
+    labels = ['FEPS', 'NPS', 'SIIPS-1', 'PVP', 'MAThS']
 
+    similarity_matrix = np.load(args.path_similarity_matrix)
+    plot_similarity_matrix(similarity_matrix, labels, args.path_output)
 
 ########################################################################################
 #Spatial similarity across networks
