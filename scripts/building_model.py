@@ -329,10 +329,9 @@ def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resamp
         for _ in range(n_resampling)
     )
     bootstrap_coef=np.stack(bootstrap_coef)
-
     bootarray = bootstrap_coef.reshape(-1, bootstrap_coef.shape[-1])
     
-    return bootarray
+    return bootarray, bootstrap_coef
 
 
 def _bootstrap_test(X,y,gr,reg,procedure,n_components):
@@ -373,8 +372,7 @@ def _bootstrap_test(X,y,gr,reg,procedure,n_components):
     #Train the model and save the regression coefficients
     for train_idx, test_idx in procedure.split(X_sample, y_sample, gr_sample):
         X_train, y_train = X_sample[train_idx], y_sample[train_idx]
-        #X_test, y_test = X_sample[test_idx], y_sample[test_idx]
-        model = reg_PCA(n_components,reg=reg)
+        model, _ = reg_PCA(n_components,reg=reg)
         model.fit(X_train, y_train)
         coefs_voxel.append(model[0].inverse_transform(model[1].coef_))
         
