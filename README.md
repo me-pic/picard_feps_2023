@@ -18,6 +18,8 @@ The brain signatures used for the similarity analyis can be found below:
 - [MAThS](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2021_Ceko_MPA2_multiaversive) 
 
 ## LASSO-PCR analysis
+The regression analysis is run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
+
 <b>How to run the LASSO-PCR analysis:</b>
 <br>`python ./main.py --path_dataset /path/to/dataset --path_fmri /path/to/fmri/data --path_output /path/to/output --seed 42 --model 'whole-brain' --reg 'lasso' --confound /path/to/confound/file --run_regression`
 - --path_dataset: specifies the path to json file containing the dataset
@@ -38,7 +40,7 @@ The brain signatures used for the similarity analyis can be found below:
 <br>`python ./main.py`
 
 ## Similarity analysis
-The similarity analysis can be run independently of the other scripts with [similarity.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/similarity.py)
+The similarity analysis can be run independently of the other scripts with [similarity.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/similarity.py).
 
 <b>How to launch the similarity script:</b>
 <br>`python ./similarity.py --path_signature '/path/to/signature' --path_feps '/path/to/feps/or/any/other/signature' --path_output 
@@ -48,8 +50,7 @@ The similarity analysis can be run independently of the other scripts with [simi
 - --path_output: specifies the path to output the results
 
 ## Visualization
-The visualization script can be run with [visualization.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/visualization.py). The fonts and the disposition of the figures were edited using Adobe 
-Illustrator.
+The visualization script can be run with [visualization.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/visualization.py). The fonts and the disposition of the figures were edited using Adobe Illustrator.
 
 <b>How to launch the visualization script:</b>
 <br>`python ./visualization.py --path_output '/path/to/output' --path_feps '/path/to/feps' 
