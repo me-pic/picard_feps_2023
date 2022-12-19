@@ -1,3 +1,4 @@
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -7,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.linear_model import Lasso, Ridge, LinearRegression
 from sklearn.svm import SVR
-from sklearn.model_selection import GroupShuffleSplit, ShuffleSplit, permutation_test_score
+from sklearn.model_selection import GroupShuffleSplit, ShuffleSplit, permutation_test_score, LeaveOneGroupOut
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, accuracy_score
 
 
@@ -102,14 +103,16 @@ def compute_metrics(y_test, y_pred, df, fold, print_verbose=True):
     df_metrics: dataFrame
         dataFrame containing the different metrics
     """  
+    pearson_r = pearson(y_test, y_pred) 
     r2 = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
     mse = mean_squared_error(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))  
-    df.loc[fold] = [r2, mae, mse, rmse]
+    df.loc[fold] = [pearson_r, r2, mae, mse, rmse]
 
     if print_verbose:
         print('------Metrics for fold {}------'.format(fold))
+        print('Pearson-r value= {}'.format(pearson_r))
         print('R2 value = {}'.format(r2))
         print('MAE value = {}'.format(mae))
         print('MSE value = {}'.format(mse))
@@ -158,7 +161,7 @@ def pearson(y_true, y_pred):
     return pearsonr(y_true, y_pred)[0]
 
 
-def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components=0.80, random_seed=42, print_verbose=True):
+def train_test_model(X, y, gr, reg=Lasso(), splits=5, split_procedure='GSS', test_size=0.3, n_components=0.80, random_seed=42, print_verbose=True, standard=False):
     """
     Build and evaluate a regression model
     First compute the PCA and then fit the regression technique specified on the PCs scores
@@ -205,38 +208,41 @@ def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components
     y_pred = []
     model = []
     model_voxel = []
-    df_metrics = pd.DataFrame(columns=["r2", "mae", "mse", "rmse"])
+    df_metrics = pd.DataFrame(columns=["pearson_r", "r2", "mae", "mse", "rmse"])
 
     #Strategy to split the data
-    if gr == None:
-        shuffle_method = ShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)
-        X_train, X_test, y_train, y_test = split_data(X, y, procedure=shuffle_method)
-    else:
-        shuffle_method = GroupShuffleSplit(n_splits = splits, test_size = test_size, random_state = random_seed)  
-        X_train, X_test, y_train, y_test = split_data(X, y, gr, shuffle_method)
-    
+    if split_procedure=='GSS':
+        split_method = GroupShuffleSplit(n_splits=splits, test_size=test_size, random_state=random_seed)
+    elif split_procedure=='SS':
+        split_method = ShuffleSplit(n_splits=splits, test_size=test_size, random_state=random_seed)
+    elif split_procedure=='LOGO':
+        split_method = LeaveOneGroupOut()
+    #Split the data into train and test sets
+    X_train, X_test, y_train, y_test = split_data(X, y, gr, procedure=split_method)
     if print_verbose:
         verbose(splits, X_train, X_test, y_train, y_test, X_verbose = True, y_verbose = True)
 
+    #Build and test the model for each c-v fold
     for i in range(splits):
-
         ###Build and test the model###
         print("----------------------------")
         print("Training model")
-        model_reg = reg_PCA(n_components,reg=reg)
+        model_reg, _ = reg_PCA(n_components,reg=reg, standard=standard)
         model.append(model_reg.fit(X_train[i], y_train[i]))
-        y_pred.append(model[i].predict(X_test[i]))
+        
         ###Scores###
+        y_pred.append(model_reg.predict(X_test[i]))
         df_metrics = compute_metrics(y_test[i], y_pred[i], df_metrics, i, print_verbose)
+        ###Model coefficients###
+        if standard:
+            model_voxel.append(model[i][1].inverse_transform(model[i][2].coef_))
+        else:
+            model_voxel.append(model[i][0].inverse_transform(model[i][1].coef_))
 
-        model_voxel.append(model[i][0].inverse_transform(model[i][1].coef_))
-
-    df_metrics.to_csv("dataframe_metrics.csv")
-
-    return X_train, y_train, X_test, y_test, y_pred, model, model_voxel
+    return X_train, y_train, X_test, y_test, y_pred, model, model_voxel, df_metrics
 
 
-def compute_permutation(X, y, gr, reg, n_components=0.80, n_permutations=5000, scoring="r2", random_seed=42):
+def compute_permutation(X, y, gr, reg, splits=5, n_components=0.80, n_permutations=5000, scoring="r2", random_seed=42):
     """
     Compute the permutation test for a specified metric (r2 by default)
     Apply the PCA after the splitting procedure
@@ -267,14 +273,12 @@ def compute_permutation(X, y, gr, reg, n_components=0.80, n_permutations=5000, s
     pvalue: float
         probability that the true score can be obtained by chance
 
-    See also scikit-learn permutation_test_score documentation
+    See also scikit-learn permutation_test_score documentation: https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.permutation_test_score.html
     """
-    if gr == None:
-        cv = ShuffleSplit(n_splits = 5, test_size = 0.3, random_state = random_seed)
-    else:    
-        cv = GroupShuffleSplit(n_splits = 5, test_size = 0.3, random_state = random_seed)
+    procedure = GroupShuffleSplit(n_splits = splits, test_size = 0.3, random_state = random_seed)
+    pipe, _ = reg_PCA(n_components, reg=reg, standard=True)
     
-    score, perm_scores, pvalue = permutation_test_score(estimator=reg_PCA(n_components,reg=reg), X=X, y=y, groups= gr, scoring=scoring, cv=cv, n_permutations=n_permutations, random_state=42)
+    score, perm_scores, pvalue = permutation_test_score(estimator=pipe, X=X, y=y, groups= gr, scoring=scoring, cv=procedure, n_permutations=n_permutations, random_state=42, n_jobs=-1)
     
     return score, perm_scores, pvalue
 
