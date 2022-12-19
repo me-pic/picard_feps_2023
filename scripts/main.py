@@ -168,9 +168,21 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
 
         ##Run the bootstrap tests
         resampling_array, resampling_coef = building_model.bootstrap_test(X, y, gr, reg=algo, njobs=n_jobs, n_resampling=n_resampling, standard=standard)
-        z, pval, pval_bonf = building_model.bootstrap_scores(resampling_array)
+        z, pval, pval_bonf, z_fdr, z_bonf, z_unc001, z_unc005, z_unc01, z_unc05 = building_model.bootstrap_scores(resampling_array, threshold=True)
         ##Save outputs
         np.savez(os.path.join(path_output, f"bootstrap_{reg}_sample_{n_resampling}_{mask_name}"), array = resampling_array, coef = resampling_coef, z = z, pval = pval, pval_bonf = pval_bonf)
+        unmask_z_fdr = unmask(z_fdr, masker)
+        nib.save(unmask_z_fdr, os.path.join(path_output, f'z_standardized_{reg}_{mask_name}_fdr.nii.gz'))
+        unmask_z_bonf = unmask(z_bonf, masker)
+        nib.save(unmask_z_bonf, os.path.join(path_output, f'z_standardized_{reg}_{mask_name}_bonf.nii.gz'))
+        unmask_z_unc001 = unmask(z_unc001, masker)
+        nib.save(unmask_z_unc001, os.path.join(path_output, f'z_standardized_{reg}_{mask_name}_unc001.nii.gz'))
+        unmask_z_unc005 = unmask(z_unc005, masker)
+        nib.save(unmask_z_unc005, os.path.join(path_output, f'z_standardized_{reg}_{mask_name}_unc005.nii.gz'))
+        unmask_z_unc01 = unmask(z_unc01, masker)
+        nib.save(unmask_z_unc01, os.path.join(path_output, f'z_standardized_{reg}_{mask_name}_unc01.nii.gz'))
+        unmask_z_unc05 = unmask(z_unc05, masker)
+        nib.save(unmask_z_unc05, os.path.join(path_output, f'z_standardized_{reg}_{mask_name}_unc05.nii.gz'))
 
 
 
