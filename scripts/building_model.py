@@ -413,6 +413,8 @@ def bootstrap_scores(boot_coefs, threshold=False):
         z-scored coefficients p < .01 uncorrected. Returned if threshold == True
     z_unc05: numpy.ndarray
         z-scored coefficients p < .05 uncorrected. Returned if threshold == True
+
+    Code adapted from https://github.com/mpcoll/coll_painvalue_2021
     """
     z_scores = np.mean(boot_coefs, axis=0)/np.std(boot_coefs, axis=0)
     assert np.sum(np.isnan(z_scores)) == 0
