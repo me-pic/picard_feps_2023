@@ -283,7 +283,7 @@ def compute_permutation(X, y, gr, reg, splits=5, n_components=0.80, n_permutatio
     return score, perm_scores, pvalue
 
 
-def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resampling=1000,njobs=5):
+def bootstrap_test(X, y, gr, reg, splits=5, test_size=0.30, n_components=0.80, n_resampling=1000, njobs=5, standard=False):
     """
     Split the data according to the group parameters
     to ensure that the train and test sets are completely independent
@@ -325,6 +325,7 @@ def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resamp
             reg=reg,
             procedure=procedure,
             n_components=n_components,
+            standard=standard
         )
         for _ in range(n_resampling)
     )
@@ -334,7 +335,7 @@ def bootstrap_test(X,y,gr,reg,splits=5,test_size=0.30,n_components=0.80,n_resamp
     return bootarray, bootstrap_coef
 
 
-def _bootstrap_test(X,y,gr,reg,procedure,n_components):
+def _bootstrap_test(X, y, gr, reg, procedure, n_components, standard=False):
     """
     Split the data according to the group parameters
     to ensure that the train and test sets are completely independent
@@ -374,6 +375,9 @@ def _bootstrap_test(X,y,gr,reg,procedure,n_components):
         X_train, y_train = X_sample[train_idx], y_sample[train_idx]
         model, _ = reg_PCA(n_components,reg=reg)
         model.fit(X_train, y_train)
-        coefs_voxel.append(model[0].inverse_transform(model[1].coef_))
+        if standard:
+            coefs_voxel.append(model[1].inverse_transform(model[2].coef_))
+        else:
+            coefs_voxel.append(model[0].inverse_transform(model[1].coef_))
         
     return coefs_voxel
