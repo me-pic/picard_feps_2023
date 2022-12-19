@@ -187,7 +187,6 @@ def plot_similarity_matrix(similarity_matrix, labels, path_output):
     ----------
     similarity_matrix: numpy.ndarray
         array containing the similarities values between pain-related signatures
-
     labels: list
         list containing the name of the signatures
     path_output: string
@@ -199,8 +198,8 @@ def plot_similarity_matrix(similarity_matrix, labels, path_output):
     fig = plt.figure(figsize=(16, 12))
     sns.heatmap(similarity_matrix, mask=mask, center=0, annot=False,
                 fmt='.2f', square=True, cmap=sns.diverging_palette(220, 20, as_cmap=True), vmin=-0.10, vmax=0.10)
-    plt.xticks(np.arange(6) + .5,labels=labels)
-    plt.yticks(np.arange(6) + .5,labels=labels)
+    plt.xticks(np.arange(len(labels)) + .5,labels=labels)
+    plt.yticks(np.arange(len(labels)) + .5,labels=labels)
     plt.show()
     fig.savefig(os.path.join(path_output, 'similarity_matrix_full_brain.svg'),transparent=True, bbox_inches='tight', facecolor='white', dpi=600)
 
