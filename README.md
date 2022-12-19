@@ -32,12 +32,30 @@ The regression analysis is run using [main.py](https://github.com/me-pic/picard_
 - --run_regression: need to be specified in order to run the regression analysis. No value is needed for that argument
 
 ## Permutation tests
+The permutations tests are run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
+
 <b>How to run the permutation tests:</b>
-<br>`python ./main.py`
+<br>`python ./main.py --path_dataset /path/to/dataset --path_fmri /path/to/fmri/data --path_output /path/to/output --seed 42 --model 'whole-brain' --reg 'lasso' --confound /path/to/confound/file --run_permutations`
+- --path_dataset: specifies the path to json file containing the dataset
+- --path_fmri: specifies the path containing the fmri data (not in BIDS format)
+- --path_output: specifies the path to output the results of the regression analysis
+- --seed (optional): specifies the integer to initialize a pseudorandom number generator. The default value is 42
+- --mask (optional): specifies the mask to use to extract the signal. This argument can take the path to a nii file containing a mask. The default value is 'whole-brain', meaning that the signal from the whole-brain will be used
+- --reg (optional): specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed
+- --confound (optional): specifies the path to the counfounds file if needed. The default value is None, meaning that no confounds will be taken into account for the signal extraction
+- --run_permutations: need to be specified in order to run the permutation tests. No value is needed for that argument
 
 ## Bootstrap tests
 <b>How to run the bootstrap tests:</b>
-<br>`python ./main.py`
+<br>`python ./main.py --path_dataset /path/to/dataset --path_fmri /path/to/fmri/data --path_output /path/to/output --seed 42 --model 'whole-brain' --reg 'lasso' --confound /path/to/confound/file --run_bootstrap`
+- --path_dataset: specifies the path to json file containing the dataset
+- --path_fmri: specifies the path containing the fmri data (not in BIDS format)
+- --path_output: specifies the path to output the results of the regression analysis
+- --seed (optional): specifies the integer to initialize a pseudorandom number generator. The default value is 42
+- --mask (optional): specifies the mask to use to extract the signal. This argument can take the path to a nii file containing a mask. The default value is 'whole-brain', meaning that the signal from the whole-brain will be used
+- --reg (optional): specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed
+- --confound (optional): specifies the path to the counfounds file if needed. The default value is None, meaning that no confounds will be taken into account for the signal extraction
+- --run_bootstrap: need to be specified in order to run the bootstrap tests. No value is needed for that argument
 
 ## Similarity analysis
 The similarity analysis can be run independently of the other scripts with [similarity.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/similarity.py).
