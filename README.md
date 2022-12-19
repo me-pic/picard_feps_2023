@@ -47,7 +47,7 @@ Illustrator.
 <br>`python ./visualization.py --path_output '/path/to/output' --path_feps '/path/to/feps' 
 --path_behavioral '/path/to/behavioral/measures' --path_dot_product '/path/to/dot/product' 
 --path_performance '/path/to/performance/metrics' --path_y_test 'path/to/y/test' --path_y_pred 
-'/path/to/y/pred' --path_siips_similarity_networks '' --path_pvp_similarity_networks '' --path_maths_similarity_networks ''`
+'/path/to/y/pred' --path_siips_similarity_networks '/path/siips/similarity' --path_pvp_similarity_networks '/path/pvp/similarity' --path_maths_similarity_networks '/path/maths/similarity' --path_similarity_matrix '/path/similarity/matrix'`
 - --path_output: specifies the path to output the figures
 - --path_feps (optional): specifies the path to the feps Nifti file. If not specified, the 
 signature weights will not be plotted 
@@ -66,3 +66,4 @@ not specified, the regression plot of the model performance will not be plotted
 - --path_siips_similarity_networks (optional): specifies the path to pickle file containing the spatial similarity metrics between the FEPS and the SIIPS-1. If not specified, the spatial similarity barplots across networks are not plotted
 - --path_pvp_similarity_networks (optional): specifies the path to pickle file containing the spatial similarity metrics between the FEPS and the PVP
 - --path_maths_similarity_networks (optional): specifies the path to pickle file containing the spatial similarity metrics between the FEPS and the MAThS
+- --path_similarity_matrix (optional): specifies the path to numpy npy file containing the spatial similarity values between the FEPS and other pain-related signatures. If not specified, the similarity matrix is not plotted
