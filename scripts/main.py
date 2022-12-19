@@ -14,48 +14,29 @@ from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
 from argparse import ArgumentParser
 
-def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_regression, run_permutations, run_bootstrap):
+def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_regression, run_permutations, run_bootstrap):
     """
-    path
-    ----
-    Path to json file containing the data (independent variable, dependent variable, group variable if needed)
-
-    seed
-    ----
-    Value to use to set the seed
-
-    model parameter
-    ---------------
-    Areas of the brain that will be used to extract the data:
-
-    'whole-brain': extract the activity from the whole-brain
-    <PATH_TO_MASK>: model could take the path to a specified mask (niimg-like object)
-
-    reg parameter
-    -------------
-    Algorithm to use on the data
-
-    'lasso': Apply Lasso regression 
-    'ridge': Apply Rigde regressions
-    'svr': Apply a Support Vector Regression 
-    'linear': Apply a linear regression 
-    'svc': Apply a Support Vector Classifier
-    'lda': Apply a Linear Discriminant Analysis classifier
-    'rf': Apply a Random Forest classifier
-
-    analysis parameter
-    ------------------
-    Specify which kind of analysis to run on the data between 3 choices:
-    'regression': regression analysis
-    'classification': classification analysis
-    'sl': searchlight analysis
-
-    folder
-    ------
-    Where to save the data
+    path_dataset: string
+        specifies the path to json file containing the dataset
+    path_fmri: string
+        specifies the path containing the fmri data (not in BIDS format)
+    path_output: string
+        specifies the path to output the results of the regression analysis
+    seed: int
+        specifies the integer to initialize a pseudorandom number generator. The default value is 42
+    mask: string
+        specifies the mask to use to extract the signal. This argument can take the path to a nii file containing a mask. The default value is 'whole-brain', meaning that the signal from the whole-brain will be used
+    reg: string
+        specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed
+    confound: string
+        specifies the path to the counfounds file if needed. The default value is None, meaning that no confounds will be taken into account for the signal extraction
+    run_regression: boolean
+        if True, the regression analysis is computed
+    run_permutations: boolean
+        if True, the permutation tests are computed
+    run_bootstrap: boolean
+        if True, the bootstrap tests are computed
     """
-
-
     ########################################################################################
     #Loading the datasets
     ########################################################################################
@@ -79,10 +60,10 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
     ########################################################################################
     ##Convert fmri files to Nifti-like objects
     array_feps = prepping_data.hdr_to_Nifti(data["data"], path_fmri)
-    if model == "whole-brain":
+    if mask == "whole-brain":
         masker, extract_X = prepping_data.extract_signal(array_feps, mask="template", standardize = True, confound=confound)
     else:
-        masker = nib.load(model)
+        masker = nib.load(mask)
         extract_X = prepping_data.extract_signal_from_mask(array_feps, masker, affine=False)
     #Standardize the signal
     stand_X = StandardScaler().fit_transform(extract_X.T)
@@ -105,6 +86,10 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
     splits=10
     split_procedure='GSS'
     test_size=0.3
+    if mask == 'whole-brain':
+            mask_name = mask
+    else:
+        mask_name = os.path.basename(mask).split('.')[0]
 
     ########################################################################################
     #Regression
@@ -113,21 +98,16 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
         X_train, y_train, X_test, y_test, y_pred, model, model_voxel, df_metrics = building_model.train_test_model(X, y, gr, splits=splits, test_size=test_size,reg=algo,random_seed=42, standard=True)
 
         #Save the outputs
-        if model == 'whole-brain':
-            model_name = model
-        else:
-            model_name = os.path.basename(model).split('.')[0]
-
-        #Save readme file with analysis info
+        ##Save readme file with analysis info
         filename_txt = os.path.join(path_output, "readme.txt")
         with open(filename_txt, 'w') as f:
             f.write(f"cv procedure = {split_procedure} \nnumber of folds = {splits} \ntest size = {test_size} \nalgorithm = {reg} \nrandom seed = {seed} \nconfounds = {confound}")
 
-        #Save the performance metrics
-        df_metrics.to_csv(os.path.join(path_output, f'dataframe_metrics_{model_name}.csv'))
+        ##Save the performance metrics
+        df_metrics.to_csv(os.path.join(path_output, f'dataframe_metrics_{mask_name}.csv'))
 
-        #Save model's coefficients
-        if model == "whole-brain" :
+        ##Save model's coefficients
+        if mask == "whole-brain" :
             for i, element in enumerate(model_voxel):
                 (masker.inverse_transform(element)).to_filename(f"coefs_whole_brain_{i}.nii.gz")
             model_to_averaged = model_voxel.copy()
@@ -135,9 +115,9 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
             (masker.inverse_transform(model_averaged)).to_filename("coefs_whole_brain_ave.nii.gz")
         else :
             array_model_voxel = []
-            if model == "M1" :
+            if mask == "M1" :
                 unmask_model = unmask(model_voxel, mask_M1)
-            if model == "without M1": 
+            if mask == "without M1": 
                 unmask_model = unmask(model_voxel, mask_NoM1)
 
             for element in unmask_model:
@@ -145,7 +125,7 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
 
             model_ave = sum(array_model_voxel)/len(array_model_voxel)
             model_to_nifti = nib.nifti1.Nifti1Image(model_ave, affine = array_feps[0].affine)
-            model_to_nifti.to_filename(f"coefs_{model}_ave.nii.gz")
+            model_to_nifti.to_filename(f"coefs_{mask_name}_ave.nii.gz")
         
         #Predict on the left out dataset
         print("Test accuray: ", building_model.predict_on_test(X_train=X[:len(y_0)], y_train=y_0, X_test=X[len(y_0):], y_test=y_1, reg=reg))
@@ -154,7 +134,7 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
             filename = f"train_test_{i}.npz"
             np.savez(filename, X_train=X_train[i],y_train=y_train[i],X_test=X_test[i],y_test=y_test[i],y_pred=y_pred[i])
 
-        #Saving the model
+        ##Saving the model
         filename_model = f"lasso_models_{model}.pickle" 
         pickle_out = open(filename_model,"wb")
         pickle.dump(model, pickle_out)
@@ -166,7 +146,7 @@ def main(path_dataset, path_fmri, path_output, seed, model, reg, confound, run_r
     if run_permutations:
         score, perm_scores, pvalue = building_model.compute_permutation(X, y, gr, reg=algo, random_seed=seed)
         perm_dict = {'score': score, 'perm_scores': perm_scores.tolist(), 'pvalue': pvalue}
-        filename_perm = f"permutation_output_{model}_{seed}.json"
+        filename_perm = f"permutation_output_{mask_name}_{seed}.json"
         with open(filename_perm, 'w') as fp:
             json.dump(perm_dict, fp)
 
