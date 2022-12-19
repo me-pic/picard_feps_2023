@@ -46,6 +46,8 @@ The permutations tests are run using [main.py](https://github.com/me-pic/picard_
 - --run_permutations: need to be specified in order to run the permutation tests. No value is needed for that argument
 
 ## Bootstrap tests
+The bootstrap tests are run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
+
 <b>How to run the bootstrap tests:</b>
 <br>`python ./main.py --path_dataset /path/to/dataset --path_fmri /path/to/fmri/data --path_output /path/to/output --seed 42 --model 'whole-brain' --reg 'lasso' --confound /path/to/confound/file --run_bootstrap`
 - --path_dataset: specifies the path to json file containing the dataset
