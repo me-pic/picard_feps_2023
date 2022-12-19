@@ -88,7 +88,7 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
     split_procedure='GSS'
     test_size=0.3
     if mask == 'whole-brain':
-            mask_name = mask
+        mask_name = mask
     else:
         mask_name = os.path.basename(mask).split('.')[0]
 
@@ -146,9 +146,14 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
     #Compute permutation tests
     ########################################################################################
     if run_permutations:
-        score, perm_scores, pvalue = building_model.compute_permutation(X, y, gr, reg=algo, random_seed=seed)
+        ##Define permutations tests
+        n_permutations = 5000
+
+        ##Run the permutations tests
+        score, perm_scores, pvalue = building_model.compute_permutation(X, y, gr, reg=algo, random_seed=seed, n_permutations=n_permutations)
         perm_dict = {'score': score, 'perm_scores': perm_scores.tolist(), 'pvalue': pvalue}
-        filename_perm = f"permutation_output_{mask_name}_{seed}.json"
+        ##Save outputs
+        filename_perm = f"permutation_output_{mask_name}.json"
         with open(filename_perm, 'w') as fp:
             json.dump(perm_dict, fp)
 
@@ -156,7 +161,18 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
     #Compute bootstrap tests
     ########################################################################################
     if run_bootstrap:
-        True
+        ##Define bootstrap parameters
+        n_resampling = 5000
+        n_jobs = -1
+        standard = True
+
+        ##Run the bootstrap tests
+        resampling_array, resampling_coef = building_model.bootstrap_test(X, y, gr, reg=algo, njobs=n_jobs, n_resampling=n_resampling, standard=standard)
+        z, pval, pval_bonf = building_model.bootstrap_scores(resampling_array)
+        ##Save outputs
+        np.savez(os.path.join(path_output, f"bootstrap_{reg}_sample_{n_resampling}_{mask_name}"), array = resampling_array, coef = resampling_coef, z = z, pval = pval, pval_bonf = pval_bonf)
+
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
