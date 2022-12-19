@@ -1,4 +1,5 @@
 from joblib import Parallel, delayed
+from nltools.stats import fdr
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -381,3 +382,50 @@ def _bootstrap_test(X, y, gr, reg, procedure, n_components, standard=False):
             coefs_voxel.append(model[0].inverse_transform(model[1].coef_))
         
     return coefs_voxel
+
+
+def bootstrap_scores(boot_coefs, threshold = False):
+    """
+    Calculate z scores and p-value based on bootstrap coefficients
+    
+    Parameters
+    ----------
+    boot_coefs: numpy.ndarray
+        bootstrap coefficients
+    
+    Returns
+    ----------
+    z_scores: numpy.ndarray
+        z scores calculated from bootstrap coefficients
+    pval: numpy.ndarray
+        p-value calculated from z-scores
+    pval_bonf: numpy.ndarray
+        corrected p-values using bonferonni correction
+    z_fdr: numpy.ndarray
+        z-scored coefficients fdr corrected. Returned if threshold == True
+    z_bonf: numpy.ndarray
+        z-scored coefficients bonferroni corrected. Returned if threshold == True
+    z_unc001: numpy.ndarray
+        z-scored coefficients p < .001 uncorrected. Returned if threshold == True
+    z_unc005: numpy.ndarray
+        z-scored coefficients p < .005 uncorrected. Returned if threshold == True
+    z_unc01: numpy.ndarray
+        z-scored coefficients p < .01 uncorrected. Returned if threshold == True
+    z_unc05: numpy.ndarray
+        z-scored coefficients p < .05 uncorrected. Returned if threshold == True
+    """
+    z_scores = np.mean(boot_coefs, axis=0)/np.std(boot_coefs, axis=0)
+    assert np.sum(np.isnan(z_scores)) == 0
+    pval = 2 * (1 - norm.cdf(np.abs(z_scores)))
+    pval_bonf = np.where(pval < (0.05/len(pval)), z_scores, 0)
+    
+    if threshold:
+        z_fdr = np.where(pval < fdr(pval, q=0.05), z_scores, 0)
+        z_bonf = np.where(pval < (0.05/len(pval)), z_scores, 0)
+        z_unc001 = np.where(pval < 0.001, z_scores, 0)
+        z_unc005 = np.where(pval < 0.005, z_scores, 0)
+        z_unc01 = np.where(pval < 0.01, z_scores, 0)
+        z_unc05 = np.where(pval < 0.05, z_scores, 0)
+        return z_scores, pval, pval_bonf, z_fdr, z_bonf, z_unc001, z_unc005, z_unc01, z_unc05
+    else:
+        return z_scores, pval, pval_bonf
