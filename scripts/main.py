@@ -50,10 +50,11 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
     ##Close json file
     open_json.close()
     ##Load confound file if specified
-    if confound == None:
-        confound = None
-    else:
-        confound = pd.read_csv(confound)
+    if confound is not None:
+        try:
+            confound = pd.read_csv(confound)
+        except:
+            print('Confound file not in csv format')
 
     ########################################################################################
     #Extract fmri signal
@@ -64,7 +65,7 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
         masker, extract_X = prepping_data.extract_signal(array_feps, mask="template", standardize = True, confound=confound)
     else:
         masker = nib.load(mask)
-        extract_X = prepping_data.extract_signal_from_mask(array_feps, masker, affine=False)
+        extract_X = prepping_data.extract_signal_from_mask(array_feps, masker, affine=True)
     #Standardize the signal
     stand_X = StandardScaler().fit_transform(extract_X.T)
     X = stand_X.T
@@ -109,36 +110,37 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
         ##Save model's coefficients
         if mask == "whole-brain" :
             for i, element in enumerate(model_voxel):
-                (masker.inverse_transform(element)).to_filename(f"coefs_whole_brain_{i}.nii.gz")
+                (masker.inverse_transform(element)).to_filename(os.path.join(path_output,f"coefs_whole_brain_{i}.nii.gz"))
             model_to_averaged = model_voxel.copy()
             model_averaged = sum(model_to_averaged)/len(model_to_averaged)
-            (masker.inverse_transform(model_averaged)).to_filename("coefs_whole_brain_ave.nii.gz")
+            (masker.inverse_transform(model_averaged)).to_filename(os.path.join(path_output, "coefs_whole_brain_ave.nii.gz"))
         else :
             array_model_voxel = []
-            if mask == "M1" :
-                unmask_model = unmask(model_voxel, mask_M1)
-            if mask == "without M1": 
-                unmask_model = unmask(model_voxel, mask_NoM1)
+            unmask_model = unmask(model_voxel, masker)
 
-            for element in unmask_model:
+            for i, element in enumerate(unmask_model):
                 array_model_voxel.append(np.array(element.dataobj))
+                element.to_filename(os.path.join(path_output, f"coefs_{mask_name}_{i}.nii.gz"))
 
             model_ave = sum(array_model_voxel)/len(array_model_voxel)
             model_to_nifti = nib.nifti1.Nifti1Image(model_ave, affine = array_feps[0].affine)
             model_to_nifti.to_filename(f"coefs_{mask_name}_ave.nii.gz")
         
-        #Predict on the left out dataset
-        print("Test accuray: ", building_model.predict_on_test(X_train=X[:len(y_0)], y_train=y_0, X_test=X[len(y_0):], y_test=y_1, reg=reg))
-        
-        for i in range(len(X_train)):
-            filename = f"train_test_{i}.npz"
-            np.savez(filename, X_train=X_train[i],y_train=y_train[i],X_test=X_test[i],y_test=y_test[i],y_pred=y_pred[i])
+        ##Save y_train, y_test and y_pred using pickle
+        filename_y_train = os.path.join(path_output, f"y_train_{mask_name}.pickle")
+        y_train_out = open(filename_y_train,"wb")
+        pickle.dump(y_train, y_train_out)
+        y_train_out.close()
 
-        ##Saving the model
-        filename_model = f"lasso_models_{model}.pickle" 
-        pickle_out = open(filename_model,"wb")
-        pickle.dump(model, pickle_out)
-        pickle_out.close()
+        filename_y_test = os.path.join(path_output, f"y_test_{mask_name}.pickle")
+        y_test_out = open(filename_y_test,"wb")
+        pickle.dump(y_test, y_test_out)
+        y_test_out.close()
+
+        filename_y_pred = os.path.join(path_output, f"y_pred_{mask_name}.pickle")
+        y_pred_out = open(filename_y_pred,"wb")
+        pickle.dump(y_pred, y_pred_out)
+        y_pred_out.close()
 
     ########################################################################################
     #Compute permutation tests
