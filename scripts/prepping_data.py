@@ -102,6 +102,7 @@ def extract_signal_from_mask(data, path_mask):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('--path_dataset', type=str, default=None) #Path to json file containing the dataset information
+    parser.add_argument('--path_fmri', type=str, default=None)
     parser.add_argument('--path_mask', type=str, default=None)
     parser.add_argument('--path_output', type=str, default=None)
     args = parser.parse_args()
@@ -110,7 +111,7 @@ if __name__ == "__main__":
     save_extracted_signal = False #if True, the extracted signal from mask will be save as a npz file
 
     data = json.loads(open(args.path_dataset, 'r').read())
-    signal = hdr_to_Nifti(data['data'], '/Users/mepicard/Documents/master_analysis/picard_feps_2022_v1/data/data_MK_pain')
+    signal = hdr_to_Nifti(data['data'], args.path_fmri)
 
     if args.path_mask is not None:
         X = extract_signal_from_mask(signal, args.path_mask)
