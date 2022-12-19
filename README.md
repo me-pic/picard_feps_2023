@@ -17,6 +17,9 @@ The brain signatures used for the similarity analyis can be found below:
 - [PVP](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2022_coll_pain_monetary_reward_decision_value)
 - [MAThS](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2021_Ceko_MPA2_multiaversive) 
 
+Required python packages can be found in the [requirements.txt](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/requirements.txt) file. To install the packages in a [virtual environment](https://pypi.org/project/virtualenv/), use the following line: 
+`pip install -r requirements.txt`
+
 ## LASSO-PCR analysis
 The regression analysis is run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
 
