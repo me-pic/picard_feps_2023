@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+from scipy.stats import zscore, norm, pearsonr
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.linear_model import Lasso, Ridge, LinearRegression
 from sklearn.svm import SVR
@@ -9,7 +11,7 @@ from sklearn.model_selection import GroupShuffleSplit, ShuffleSplit, permutation
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, accuracy_score
 
 
-def split_data(X,Y,group,procedure):
+def split_data(X, Y, group, procedure):
     """
     Split the data according to the group parameters
     to ensure that the train and test sets are completely independent
@@ -49,7 +51,7 @@ def split_data(X,Y,group,procedure):
     return X_train, X_test, y_train, y_test
 
 
-def verbose(splits, X_train, X_test, y_train, y_test, X_verbose = True, y_verbose = True):
+def verbose(splits, X_train, X_test, y_train, y_test, X_verbose=True, y_verbose=True):
     """
     Print the mean and the standard deviation of the train and test sets
    
@@ -80,7 +82,7 @@ def verbose(splits, X_train, X_test, y_train, y_test, X_verbose = True, y_verbos
         print('\n')
 
 
-def compute_metrics(y_test, y_pred, df, fold, print_verbose): 
+def compute_metrics(y_test, y_pred, df, fold, print_verbose=True): 
     """
     Compute different metrics and print them
 
@@ -103,9 +105,9 @@ def compute_metrics(y_test, y_pred, df, fold, print_verbose):
     r2 = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
     mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))  
     df.loc[fold] = [r2, mae, mse, rmse]
+
     if print_verbose:
         print('------Metrics for fold {}------'.format(fold))
         print('R2 value = {}'.format(r2))
@@ -117,7 +119,7 @@ def compute_metrics(y_test, y_pred, df, fold, print_verbose):
     return df
 
 
-def reg_PCA(n_component, reg = Lasso()):
+def reg_PCA(n_component, reg=Lasso(), standard=False):
     """
     Parameters
     ----------
@@ -132,14 +134,31 @@ def reg_PCA(n_component, reg = Lasso()):
     See also sklearn PCA documentation: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
     See also sklearn Pipeline documentation: https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html
     """
-
-    estimators = [('reduce_dim', PCA(n_component)), ('clf', reg)] 
+    pca = PCA(n_component)
+    if standard:
+        estimators = [('scaler',StandardScaler()),('reduce_dim', pca), ('clf', reg)] 
+    else: 
+        estimators = [('reduce_dim', pca), ('clf', reg)] 
     pipe = Pipeline(estimators)
-    return pipe
+
+    return pipe, pca
+
+
+def pearson(y_true, y_pred):
+    """
+    Compute pearson correlation coefficient
+
+    Parameters
+    ----------
+    y_true: numpy.ndarray
+        ground truth
+    y_pred: numpy.ndarray
+        predicted values
+    """
+    return pearsonr(y_true, y_pred)[0]
 
 
 def train_test_model(X, y, gr, reg=Lasso(), splits=5,test_size=0.3, n_components=0.80, random_seed=42, print_verbose=True):
-
     """
     Build and evaluate a regression model
     First compute the PCA and then fit the regression technique specified on the PCs scores
