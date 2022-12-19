@@ -1,28 +1,13 @@
 import os
 import pickle
 import numpy as np
-from numpy.linalg import norm
-from nilearn.image import math_img
-import random
 import ptitprince as pt
 from nilearn import plotting
 import matplotlib.ticker as ticker
-from nilearn import datasets
-from nilearn.masking import unmask
-from nilearn.maskers import NiftiMasker
-from scipy.stats import ttest_ind, ttest_1samp, permutation_test
-from scipy.spatial.distance import correlation
-from nilearn.image import load_img, resample_to_img, new_img_like
-from nilearn.masking import apply_mask, unmask
-from nilearn.reporting import get_clusters_table
-from scipy.stats import pearsonr, zscore, linregress
-from scipy.io import loadmat
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
-import nibabel as nib
-from itertools import combinations
 from argparse import ArgumentParser
 
 def load_pickle(path):
