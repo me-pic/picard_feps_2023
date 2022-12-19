@@ -384,7 +384,7 @@ def _bootstrap_test(X, y, gr, reg, procedure, n_components, standard=False):
     return coefs_voxel
 
 
-def bootstrap_scores(boot_coefs, threshold = False):
+def bootstrap_scores(boot_coefs, threshold=False):
     """
     Calculate z scores and p-value based on bootstrap coefficients
     
