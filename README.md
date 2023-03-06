@@ -1,5 +1,3 @@
-> :warning: This section is under construction :construction_worker_woman:
-
 # Code for Picard et al., Title
 
 ## Notes
