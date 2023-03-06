@@ -1,4 +1,4 @@
-# Code for Picard et al., Title
+# Code for Picard et al., Facial expression: a distinctive behavioural marker of pain processing in the brain
 
 ## Notes
 
