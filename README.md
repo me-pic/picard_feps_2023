@@ -1,5 +1,4 @@
-# Code for Picard et al., Facial expression is a distinctive behavioural 
-marker of pain processing in the brain
+# Code for Picard et al., Facial expression is a distinctive behavioural marker of pain processing in the brain
 
 ## Notes
 
