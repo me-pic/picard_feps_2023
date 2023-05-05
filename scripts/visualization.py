@@ -1,7 +1,9 @@
 import os
 import pickle
+import json
 import numpy as np
 import ptitprince as pt
+import networkx as nx
 from nilearn import plotting
 import matplotlib.ticker as ticker
 import pandas as pd
@@ -9,10 +11,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 from argparse import ArgumentParser
+from joypy import joyplot
 
 def load_pickle(path):
     file = open(path,'rb')
     object_file = pickle.load(file)
+    file.close()
+    return object_file
+
+
+def load_json(path):
+    file = open(path)
+    object_file = json.load()
     file.close()
     return object_file
 
@@ -189,15 +199,79 @@ def plot_similarity_matrix(similarity_matrix, labels, path_output):
     fig.savefig(os.path.join(path_output, 'similarity_matrix_full_brain.svg'),transparent=True, bbox_inches='tight', facecolor='white', dpi=600)
 
 
-def plot_similarity_from_network(similarity_feps, signature=None,row=0,col=0, ax=None, ylim=[-0.26,0.26], palette="crest", rotation=90, y='Cosine similarity'):
-    df = pd.DataFrame({'Network':[tup[0] for tup in similarity_feps], y:[tup[1] for tup in similarity_feps]})
-    sns.barplot(data=df,x='Network', y=y, palette=palette, ax=ax[row, col]).set(title=f'{signature}')
-    ax[row, col].tick_params(axis='x',rotation=rotation)
-    if col > 0:
-        ax[row, col].set(xlabel=None, ylim=(ylim[0],ylim[1]), yticklabels=[], ylabel=None)
-    else:
-        ax[row, col].set(xlabel=None, ylim=(ylim[0],ylim[1]))
-    plt.axhline(0, color="black")
+def plot_network_diagram(dict_similarity, path_output):
+    """
+    Parameters
+    ----------
+    dict_similarity: dict
+        dictionary containing the significant similarity values
+    path_output: string
+        path for saving the output(s)
+    
+    See also
+    --------
+    https://networkx.org
+    """
+    G = nx.Graph()
+    G.add_node("FEPS")
+    G.add_node("SIIPS")
+    G.add_node("NPS")
+    G.add_node("TPAS")
+    G.add_node("PVP")
+
+    pos = nx.spring_layout(G, seed=9)
+    G.add_edges_from([("FEPS", "SIIPS", {"weight": dict_similarity["feps_siips"]}),
+                 ("FEPS", "PVP", {"weight": dict_similarity["feps_pvp"]}),
+                 ("SIIPS", "NPS", {"weight": dict_similarity["siips_nps"]}),
+                 ("SIIPS", "PVP", {"weight": dict_similarity["siips_pvp"]}),
+                 ("SIIPS", "TPAS", {"weight": dict_similarity["siips_tpas"]})])
+    options= {"node_color": "slategray",
+              "edge_color": ["#FA8072", "#FA8072", "#FC5A50", "#ADD8E6", "#FC5A50"],
+              "width": 2}
+    plt.figure(figsize=(3,3))
+    nx.draw(
+        G, pos, **options
+    )
+    plt.savefig(os.path.join(path_output, 'graph_network_similarity.svg'), dpi=300, transparent=True)
+
+
+def plot_similarity_from_network(dict_similarity, path_output, label=None):
+    """
+    Parameters
+    ----------
+    dict_similarity: dict
+        dictionary containing the similarity values and null distributions across networks
+    path_output: string
+        path for saving the output(s)
+    labels: string
+        name of the signature
+    """
+    hls = sns.color_palette("hls", 7)
+    networks_name = []
+    networks_similarity = []
+    for k in dict_similarity['distr'].keys():
+        networks_name.append([k]*len(dict_similarity['distr'][k]))
+        networks_similarity.append(dict_similarity['distr'][k])
+
+    df = pd.DataFrame({'Values': networks_similarity, 'Network': networks_name})
+
+    joyplot(df, 
+            by = 'Network', column = 'Values', 
+            color = hls, alpha=0.5, fade = False, 
+            overlap=0.1, x_range=[-0.3,0.3], figsize=(3,3))
+    plt.axvline(x = dict_similarity['similarity']['dan'], ymin = 0.875, ymax = 0.985, color = hls[0], lw=3)
+    plt.axvline(x = dict_similarity['similarity']['dmn'], ymin = 0.73, ymax = 0.84, color = hls[1], lw=3)
+    plt.axvline(x = dict_similarity['similarity']['fpn'], ymin = 0.59, ymax = 0.70, color = hls[2], lw=3)
+    plt.axvline(x = dict_similarity['similarity']['ln'], ymin = 0.45, ymax = 0.56, color = hls[3], lw=3)
+    plt.axvline(x = dict_similarity['similarity']['smn'], ymin = 0.305, ymax = 0.415, color = hls[4], lw=3)
+    plt.axvline(x = dict_similarity['similarity']['van'], ymin = 0.165, ymax = 0.275, color = hls[5], lw=3)
+    plt.axvline(x = dict_similarity['similarity']['vn'], ymin = 0.022, ymax = 0.132, color = hls[6], lw=3)
+    plt.xlabel("Null distributions")
+    plt.ylabel("Cortical networks")
+    plt.savefig(os.path.join(path_output, f"ridgeplot_{label}_cortical_networks.svg"), 
+                dpi=300, transparent=True)
+    
+
     
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -208,10 +282,9 @@ if __name__ == "__main__":
     parser.add_argument("--path_performance", type=str, default=None)
     parser.add_argument("--path_y_test", type=str, default=None)
     parser.add_argument("--path_y_pred", type=str, default=None)
-    parser.add_argument("--path_siips_similarity_networks", type=str, default=None)
-    parser.add_argument("--path_pvp_similarity_networks", type=str, default=None)
-    parser.add_argument("--path_maths_similarity_networks", type=str, default=None)
+    parser.add_argument("--path_similarity_networks", type=str, default=None)
     parser.add_argument("--path_similarity_matrix", type=str, default=None)
+    parser.add_argument("--path_similarity_dict", type=str, default=None)
     args = parser.parse_args()
 
     #Define the general parameters
@@ -291,40 +364,18 @@ if __name__ == "__main__":
     #Spatial similarity matrix
     ########################################################################################
     if args.path_similarity_matrix is not None:
-        #Definie parameters
-        labels = ['FEPS', 'NPS', 'SIIPS-1', 'PVP', 'MAThS']
+        #Define parameters
+        labels = ['FEPS', 'NPS', 'SIIPS-1', 'PVP', 'TPAS']
 
         similarity_matrix = np.load(args.path_similarity_matrix)
+        similarity_dict = load_json(args.path_similarity_dict)
         plot_similarity_matrix(similarity_matrix, labels, args.path_output)
+        plot_network_diagram(similarity_dict, args.path_output)
 
     ########################################################################################
     #Spatial similarity across networks
     ########################################################################################
-    if args.path_siips_similarity_networks is not None:
-        #Define parameters
-        ymin = -0.26
-        ymax = 0.26
-        y = 'Cosine similarity'
-        ncols = 3
-
-        similarity_feps_siips = load_pickle(args.path_siips_similarity_networks)[0]
-        similarity_feps_pvp = load_pickle(args.path_pvp_similarity_networks)[0]
-        similarity_feps_maths = load_pickle(args.path_maths_similarity_networks)[0]
-        similarity_feps_signatures = [similarity_feps_siips,similarity_feps_pvp, similarity_feps_maths]
-        signatures = ['SIIPS-1', 'PVP', 'MAThS']
-
-        fig,ax = plt.subplots(nrows=2,ncols=ncols, sharex=False)
-        for idx, elem in enumerate(similarity_feps_signatures):
-            if idx < ncols:
-                row = 0
-                col = idx
-            else:
-                row = 1
-                col = idx-ncols
-            plot_similarity_from_network(elem, signatures[idx], row=row,col=col,ax=ax, ylim=[ymin,ymax], palette=cold_palette[1:], rotation=90, y=y)
-            
-        fig.delaxes(ax[1][0])
-        fig.delaxes(ax[1][1])
-        fig.delaxes(ax[1][2])
-        plt.tight_layout()
-        plt.savefig(os.path.join(args.path_output, f'similarity_feps_cortical_networks'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+    if args.path_similarity_networks is not None:
+        label = args.path_similarity_networks.split('/')[-1].split('.')[0]
+        similarity_feps_sign = load_json(args.path_similarity_networks)
+        plot_similarity_from_network(similarity_feps_sign, args.path_output, label)
