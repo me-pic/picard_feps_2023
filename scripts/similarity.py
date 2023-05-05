@@ -4,7 +4,7 @@ import numpy as np
 from numpy.linalg import norm
 from neuromaps import nulls
 from neuromaps.stats import compare_images
-from nilearn.image import math_img
+from nilearn.image import math_img, resample_to_img
 from nilearn.masking import unmask
 from nilearn import datasets
 from nilearn.maskers import NiftiMasker
@@ -16,48 +16,6 @@ def cosine_similarity(A,B):
     Compute the cosine similarity between two vectors
     """
     return (np.dot(A,B.T)/(norm(A)*norm(B)))
-
-
-def similarity(path_signature, path_feps, gr_mask, metric=None):
-    """
-    Compute spatial similarity metrics between two signatures defined in path_signature and path_feps
-    
-    Parameters
-    ----------
-    path_signature: string
-        signature path (path to nii file) on which to calculate the similarity with the signature defined in the path_feps
-    path_feps: string
-        feps path (path to nii file) on which to calculate the similarity with the signature defined in the path_signature
-    metric: string (None)
-        metric to use to compute the spatial similarity between the signature and the feps. If the metric is not defined, 
-        both the cosine similarity and the pearson product-moment correlation will be computed
-        'cosine': compute the cosine similarity between the signature and the feps
-        'pearson': compute the pearson product-moment correlation between the signature and the feps
-    
-    Returns
-    -------
-    similarity: int or tuple
-        similarity metric. If cosine similarity and person correlation are computed, return a tuple
-    """
-    similarity=[]
-
-    #Extract the signature and the feps signal
-    masker = NiftiMasker(gr_mask)
-    feps = masker.fit_transform(path_feps)
-    masker = NiftiMasker(gr_mask)
-    signature = masker.fit_transform(path_signature)
-    
-    if metric=='cosine':
-        #compute cosine similarity
-        similarity = cosine_similarity(feps, signature)[0][0]
-    elif metric=='pearson':
-        #Compute pearson product-moment correlation
-        similarity = np.corrcoef(feps, signature)[0][1]
-    else:
-        #Compute both cosine similarity and pearson product-moment correlation
-        similarity = (cosine_similarity(feps, signature), np.corrcoef(feps, signature)[0][1])
-    
-    return similarity
 
 
 def similarity_across_networks(path_signature, path_feps, path_mask, labels=None, metric=None):
@@ -153,6 +111,7 @@ def similarity_nulls(path_signature, apply_gm = True, n_perm=1000):
 
     return nulls_sign
 
+
 def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None):
     """
     Parameters
@@ -174,7 +133,7 @@ def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None):
         pvalue of 'similarity_value'
     distr: array
         null distribution of similarity metrics
-
+    
     See also
     --------
     https://netneurolab.github.io/neuromaps/generated/neuromaps.stats.compare_images.html#neuromaps.stats.compare_images
@@ -190,6 +149,92 @@ def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None):
         similarity_value, pval, distr = compare_images(x, y, metric=metric, nulls=nulls, return_nulls=True)
 
     return similarity_value, pval, distr
+
+
+def similarity_nulls_networks(path_signature, path_mask, n_perm=1000):
+    """
+    Parameters
+    ----------
+    path_signature: string
+        signature path (path to nii file) on which to calculate the null distribution
+    path_mask: string
+        path to the masks used to extract the signature and the feps signal
+    n_perm: int
+        number of permutation to compute
+    
+    Returns
+    -------
+    nulls_sign: array
+        generated null distribution
+
+    References
+    ----------
+    Burt, J. B., Helmer, M., Shinn, M., Anticevic, A., & Murray, J. D. (2020). 
+        Generative modeling of brain maps with spatial autocorrelation. 
+        NeuroImage, 220, 117038. https://doi.org/10.1016/j.neuroimage.2020.117038
+    
+    See also
+    --------
+    https://netneurolab.github.io/neuromaps/user_guide/nulls.html
+    """
+    #Apply cortical network mask given by 'path_mask'
+    nw_mask = resample_to_img(source_img=path_mask, target_img=datasets.load_mni152_gm_mask(), interpolation='nearest')
+    masker = NiftiMasker(math_img("img>0", img=nw_mask))
+    masked_nw = masker.fit_transform(path_signature)
+    x = unmask(masked_nw, masker.mask_img_)
+
+    #Compute null models
+    nulls_sign = nulls.burt2020(x, 
+                                atlas='MNI152', 
+                                density='3mm', 
+                                n_perm=n_perm, 
+                                n_proc=-1, 
+                                seed=1234)
+    
+
+    return nulls_sign
+
+
+def similarity_nulls_significance_networks(nulls, x, y, path_mask, metric=None):
+    """
+    Parameters
+    ----------
+    nulls: array
+        generated null distribution
+    x: string
+        signature path (path to nii file) on which the null distribution was computed
+    y: string
+        signature path (path to nii file) on which to compute the similarity with x
+    path_mask: string
+        path to the masks used to extract the signature and the feps signal
+    metric: string
+        type of similarity metric to compare x and y
+
+    Returns
+    -------
+    similarity_value:
+        similarity of the comparison between x and y 
+    pval:
+        pvalue of 'similarity_value'
+    distr: array
+        null distribution of similarity metrics
+    
+    See also
+    --------
+    https://netneurolab.github.io/neuromaps/generated/neuromaps.stats.compare_images.html#neuromaps.stats.compare_images
+    """
+    nw_mask = resample_to_img(source_img=path_mask, target_img=datasets.load_mni152_gm_mask(), interpolation='nearest')
+    masker = (NiftiMasker(math_img("img>0", img=nw_mask)))
+    masked_nw = masker.fit_transform(y)
+    y = unmask(masked_nw, masker.mask_img)
+
+    if metric is None:
+        similarity_value, pval, distr = compare_images(x, y, metric=cosine_similarity, nulls=nulls, return_nulls=True)
+    else:
+        similarity_value, pval, distr = compare_images(x, y, metric=metric, nulls=nulls, return_nulls=True)
+
+    return similarity_value, pval, distr
+
 
 if __name__ == "__main__":
     #Arguments to pass to the script
@@ -224,8 +269,10 @@ if __name__ == "__main__":
         separated_regions.append(math_img(f"img == {i}", img=atlas_yeo))
 
     #Compute the spatial similarity across the cortical networks
-    similarity_cortical = similarity_across_networks(path_signature=args.path_signature, path_feps=args.path_feps, path_mask=separated_regions, labels=labels_cortical, metric=metric, permutation=permutation, n_permutation=n_permutation)
-    #Save the output
-    with open(os.path.join(args.path_output, f"spatial_similarity_cortical_networks_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
-        pickle.dump(similarity_cortical, output_file)
-    output_file.close()
+    for idx, label in enumerate(labels_cortical):
+        nulls_distr_nw = similarity_nulls_networks(args.path_feps, separated_regions[idx])
+        similarity_value_nw, pval_nw, distr_nw = similarity_nulls_significance_networks(nulls_distr, args.path_feps, args.path_signature, separated_regions[idx])
+        #save the output
+        with open(os.path.join(args.path_output, f"spatial_similarity_{label}_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file_nw:
+            pickle.dump([similarity_value_nw, pval_nw, distr_nw], output_file_nw)
+        output_file_nw.close()
