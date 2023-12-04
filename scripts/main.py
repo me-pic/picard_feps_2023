@@ -79,7 +79,7 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
         masker, extract_X = prepping_data.extract_signal(array_feps, mask="template", standardize = True,)
     else:
         masker = nib.load(mask)
-        extract_X = prepping_data.extract_signal_from_mask(array_feps, masker)
+        extract_X = prepping_data.extract_signal_from_mask(array_feps, mask)
     #Standardize the signal
     stand_X = StandardScaler().fit_transform(extract_X.T)
     X = stand_X.T
@@ -140,7 +140,7 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
 
             model_ave = sum(array_model_voxel)/len(array_model_voxel)
             model_to_nifti = nib.nifti1.Nifti1Image(model_ave, affine = array_feps[0].affine)
-            model_to_nifti.to_filename(f"coefs_{mask_name}_ave.nii.gz")
+            model_to_nifti.to_filename(os.path.join(path_output, f"coefs_{mask_name}_ave.nii.gz"))
         
         ##Save y_train, y_test and y_pred using pickle
         filename_y_train = os.path.join(path_output, f"y_train_{mask_name}.pickle")
