@@ -9,12 +9,12 @@ import pandas as pd
 import numpy as np
 import nibabel as nib
 from nilearn.masking import unmask
-from sklearn.linear_model import Lasso, Ridge, LinearRegression
+from sklearn.linear_model import Lasso, Ridge, LinearRegression, HuberRegressor
 from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
 from argparse import ArgumentParser
 
-def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_regression, run_permutations, run_bootstrap):
+def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_regression, run_permutations, run_bootstrap, transformation=None):
     """
     path_dataset: string
         specifies the path to json file containing the dataset
@@ -27,7 +27,7 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
     mask: string
         specifies the mask to use to extract the signal. This argument can take the path to a nii file containing a mask. The default value is 'whole-brain', meaning that the signal from the whole-brain will be used
     reg: string
-        specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed
+        specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed 
     confound: string
         specifies the path to the counfounds file if needed. The default value is None, meaning that no confounds will be taken into account for the signal extraction
     run_regression: boolean
@@ -36,6 +36,8 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
         if True, the permutation tests are computed
     run_bootstrap: boolean
         if True, the bootstrap tests are computed
+    transformation: string
+        specifies the transformation to apply to the predicted variable. Default to None.
     """
     ########################################################################################
     #Loading the datasets
@@ -57,15 +59,27 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
             print('Confound file not in csv format')
 
     ########################################################################################
+    #Apply transformation to the predicted variable
+    ########################################################################################
+    if transformation == "log":
+        y = np.log(y+1)
+    elif transformation == "sqrt":
+        y = np.sqrt(y)
+    elif transformation is None:
+        pass
+    else:
+        print("Transformation not recognized. Please choose between 'log', 'sqrt', or None")
+
+    ########################################################################################
     #Extract fmri signal
     ########################################################################################
     ##Convert fmri files to Nifti-like objects
     array_feps = prepping_data.hdr_to_Nifti(data["data"], path_fmri)
     if mask == "whole-brain":
-        masker, extract_X = prepping_data.extract_signal(array_feps, mask="template", standardize = True, confound=confound)
+        masker, extract_X = prepping_data.extract_signal(array_feps, mask="template", standardize = True,)
     else:
         masker = nib.load(mask)
-        extract_X = prepping_data.extract_signal_from_mask(array_feps, masker, affine=True)
+        extract_X = prepping_data.extract_signal_from_mask(array_feps, masker)
     #Standardize the signal
     stand_X = StandardScaler().fit_transform(extract_X.T)
     X = stand_X.T
@@ -82,6 +96,8 @@ def main(path_dataset, path_fmri, path_output, seed, mask, reg, confound, run_re
         algo = SVR(kernel="linear")
     elif reg == 'linear':
         algo = LinearRegression()
+    elif reg == 'huber':
+        algo = HuberRegressor(epsilon=1.35, max_iter=2000)
     
     #Set model parameters
     splits=10
@@ -192,12 +208,13 @@ if __name__ == "__main__":
     parser.add_argument("--path_fmri", type=str, default=None)
     parser.add_argument("--path_output", type=str, default=None)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--model", type=str, default="whole-brain")
-    parser.add_argument("--reg", type=str, choices=['lasso','ridge','svr','linear'], default='lasso')
+    parser.add_argument("--mask", type=str, default="whole-brain")
+    parser.add_argument("--reg", type=str, choices=['lasso','ridge','svr','linear', 'huber'], default='lasso')
     parser.add_argument('--confound', type=str, default=None)
-    parser.add_argument('--run_regression', action='store_true') 
-    parser.add_argument('--run_permutations', action='store_true')
-    parser.add_argument('--run_bootstrap', action='store_true')
+    #parser.add_argument('--run_regression', action='store_true') 
+    #parser.add_argument('--run_permutations', action='store_true')
+    #parser.add_argument('--run_bootstrap', action='store_true')
+    parser.add_argument('--transformation', type=str, default=None)
     args = parser.parse_args()
 
-    main(args.path_dataset, args.path_fmri, args.path_output, args.seed, args.model, args.reg, args.confound, )
+    main(args.path_dataset, args.path_fmri, args.path_output, args.seed, args.mask, args.reg, args.confound, True, False, False, args.transformation)
