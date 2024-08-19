@@ -1,4 +1,4 @@
-# Code for Picard et al., Facial expression is a distinctive behavioural marker of pain processing in the brain
+# Code for Picard et al., A distributed brain response predicting the facial expression of acute nociceptive pain
 
 ---
 **NOTE**
@@ -16,8 +16,8 @@ The brain signatures used for the similarity analyis can be found below:
 - [PVP](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2022_coll_pain_monetary_reward_decision_value)
 - [TPAS](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2021_Ceko_MPA2_multiaversive) 
 
-Required python packages can be found in the [requirements.txt](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/requirements.txt) file. To install the packages in a [virtual environment](https://pypi.org/project/virtualenv/), use the following line: 
-`pip install -r requirements.txt`. All the analyses were run in a virtual environment using python 3.9.12
+All the analyses were run in a virtual environment using python 3.9.12. Required python packages can be found in the [requirements.txt](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/requirements.txt) file. To install the packages in a [virtual environment](https://pypi.org/project/virtualenv/), use the following line: 
+`pip install -r requirements.txt`. 
 
 ---
 
