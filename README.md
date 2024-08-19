@@ -31,7 +31,7 @@ The LMM analyses are run using [LMM.R](https://github.com/me-pic/picard_feps_202
 The regression analysis is run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
 
 <b>How to run the LASSO-PCR analysis:</b>
-<br>`python ./main.py --path_dataset /path/to/dataset --path_fmri /path/to/fmri/data --path_output /path/to/output --seed 42 --model 'whole-brain' --reg 'lasso' --confound /path/to/confound/file --run_regression`
+<br>`python ./main.py --path_dataset /path/to/dataset --path_fmri /path/to/fmri/data --path_output /path/to/output --seed 42 --model 'whole-brain' --reg 'lasso' --confound /path/to/confound/file --run_regression --transformation log`
 - --path_dataset: specifies the path to json file containing the dataset
 - --path_fmri: specifies the path containing the fmri data (not in BIDS format)
 - --path_output: specifies the path to output the results of the regression analysis
