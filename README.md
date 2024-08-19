@@ -18,6 +18,12 @@ The brain signatures used for the similarity analyis can be found below:
 Required python packages can be found in the [requirements.txt](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/requirements.txt) file. To install the packages in a [virtual environment](https://pypi.org/project/virtualenv/), use the following line: 
 `pip install -r requirements.txt`
 
+## Linear Mixed Model analyses
+The LMM analyses are run using [LMM.R](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/LMM.R). 
+
+<b>How to run the LMM analyses:</b>
+<br> Open the LMM.R script, change the paths to load the data to the correct ones, and run the script line by line.
+
 ## LASSO-PCR analysis
 The regression analysis is run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
 
