@@ -40,6 +40,7 @@ The regression analysis is run using [main.py](https://github.com/me-pic/picard_
 - --reg (optional): specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed
 - --confound (optional): specifies the path to the counfounds file if needed. The default value is None, meaning that no confounds will be taken into account for the signal extraction
 - --run_regression: need to be specified in order to run the regression analysis. No value is needed for that argument
+- --transformation (optional): specifies the transformation to apply to the target variable. The results included in the manuscript were run using the `log` transformation.
 
 ## Permutation tests
 The permutations tests are run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
