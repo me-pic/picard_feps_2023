@@ -1,8 +1,9 @@
 # Code for Picard et al., Facial expression is a distinctive behavioural marker of pain processing in the brain
 
-## Notes
+---
+**NOTE**
 
-The scripts were developed to analyze already preprocessed trial-by-trial fMRI contrast images (hdr/img files). The data used in 
+The scripts were developed to analyze already preprocessed trial-by-trial fMRI activation maps (hdr/img files). The data used in 
 this study come from Kunz et al. (2012) study. The data were not in BIDS format, thus the scripts might not directly work on BIDS 
 organized data. Each script can be run separately (see the documentation below), but a main script 
 ([main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py)) is provided to run the complete analysis pipeline.
@@ -16,7 +17,15 @@ The brain signatures used for the similarity analyis can be found below:
 - [TPAS](https://github.com/canlab/Neuroimaging_Pattern_Masks/tree/master/Multivariate_signature_patterns/2021_Ceko_MPA2_multiaversive) 
 
 Required python packages can be found in the [requirements.txt](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/requirements.txt) file. To install the packages in a [virtual environment](https://pypi.org/project/virtualenv/), use the following line: 
-`pip install -r requirements.txt`
+`pip install -r requirements.txt`. All the analyses were run in a virtual environment using python 3.9.12
+
+---
+
+## Linear Mixed Model analyses
+The LMM analyses are run using [LMM.R](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/LMM.R). 
+
+<b>How to run the LMM analyses:</b>
+<br> Open the LMM.R script, change the paths to load the data to the correct ones, and run the script line by line.
 
 ## LASSO-PCR analysis
 The regression analysis is run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).
@@ -31,6 +40,7 @@ The regression analysis is run using [main.py](https://github.com/me-pic/picard_
 - --reg (optional): specifies the regression algorithm to use in the analysis. The default value is 'lasso', meaning that a LASSO regression will be performed
 - --confound (optional): specifies the path to the counfounds file if needed. The default value is None, meaning that no confounds will be taken into account for the signal extraction
 - --run_regression: need to be specified in order to run the regression analysis. No value is needed for that argument
+- --transformation (optional): specifies the transformation to apply to the target variable. The results included in the manuscript were run using the `log` transformation.
 
 ## Permutation tests
 The permutations tests are run using [main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py).

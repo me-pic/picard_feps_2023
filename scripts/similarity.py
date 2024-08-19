@@ -112,7 +112,7 @@ def similarity_nulls(path_signature, apply_gm = True, n_perm=1000):
     return nulls_sign
 
 
-def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None):
+def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None, return_nulls=True):
     """
     Parameters
     ----------
@@ -124,6 +124,8 @@ def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None):
         signature path (path to nii file) on which to compute the similarity with x
     metric: string
         type of similarity metric to compare x and y
+    return_nulls: bool
+        if True, return null distribution of comparaisons
     
     Returns
     -------
@@ -141,12 +143,14 @@ def similarity_nulls_significance(nulls, x, y, apply_gm=True, metric=None):
     if apply_gm:
         mask_gm = NiftiMasker(mask_img=datasets.load_mni152_gm_mask())
         masked_data = mask_gm.fit_transform(os.path.join(y))
+        masked_x = mask_gm.fit_transform(os.path.join(x))
         y = unmask(masked_data, mask_gm.mask_img_)
+        x = unmask(masked_x, mask_gm.mask_img_)
 
     if metric is None:
-        similarity_value, pval, distr = compare_images(x, y, metric=cosine_similarity, nulls=nulls, return_nulls=True)
+        similarity_value, pval, distr = compare_images(x, y, metric=cosine_similarity, nulls=nulls, return_nulls=return_nulls)
     else:
-        similarity_value, pval, distr = compare_images(x, y, metric=metric, nulls=nulls, return_nulls=True)
+        similarity_value, pval, distr = compare_images(x, y, metric=metric, nulls=nulls, return_nulls=return_nulls)
 
     return similarity_value, pval, distr
 
@@ -253,6 +257,7 @@ if __name__ == "__main__":
     #Compute the spatial similarity between signatures defined in path_signature and path_feps
     nulls_distr = similarity_nulls(args.path_feps)
     similarity_value, pval, distr = similarity_nulls_significance(nulls_distr, args.path_feps, args.path_signature)
+
     #Save the output
     with open(os.path.join(args.path_output, f"spatial_similarity_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file:
         pickle.dump([similarity_value, pval, distr], output_file)
@@ -271,7 +276,7 @@ if __name__ == "__main__":
     #Compute the spatial similarity across the cortical networks
     for idx, label in enumerate(labels_cortical):
         nulls_distr_nw = similarity_nulls_networks(args.path_feps, separated_regions[idx])
-        similarity_value_nw, pval_nw, distr_nw = similarity_nulls_significance_networks(nulls_distr, args.path_feps, args.path_signature, separated_regions[idx])
+        similarity_value_nw, pval_nw, distr_nw = similarity_nulls_significance_networks(nulls_distr_nw, args.path_feps, args.path_signature, separated_regions[idx])
         #save the output
         with open(os.path.join(args.path_output, f"spatial_similarity_{label}_{args.path_feps.split('/')[-1].split('.')[0]}_{args.path_signature.split('/')[-1].split('.')[0]}.pickle"), 'wb') as output_file_nw:
             pickle.dump([similarity_value_nw, pval_nw, distr_nw], output_file_nw)
