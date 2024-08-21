@@ -364,7 +364,6 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--path_output", type=str, default=None)
     parser.add_argument("--path_feps", type=str, default=None)
-    parser.add_argument("--path_facs_feps", type=str, default=None)
     parser.add_argument("--path_behavioral", type=str, default=None)
     parser.add_argument("--path_feps_expression", type=str, default=None)
     parser.add_argument("--path_performance", type=str, default=None)
@@ -403,18 +402,6 @@ if __name__ == "__main__":
     ########################################################################################
     #Plotting the correlation between the signature expression and the FACS scores
     ########################################################################################
-    if args.path_facs_feps is not None:
-        #Define the parameters
-        behavioral_col = 'FACS'
-        df_behavioral = pd.read_csv(args.path_facs_feps)
-        x = 'Pattern expression'
-        y = 'FACS score'
-        idx = 0 #Adjust to change the color
-
-        #Plot the correlation 
-        signature_dot_prod=np.load(args.path_dot_product)
-        plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette, extension='png')
-
 
     if args.path_feps_expression is not None:
         #Define the parameters
@@ -510,3 +497,13 @@ if __name__ == "__main__":
         # Intensity rating distribution
         # NOTE: Make sure you are in a virtual environment with seaborn 0.11.0
         violin_plot_performance(df_behavioral, metric=y_int, figsize = (3, 3.8), color=color_int, linewidth_half=2, alpha_half=0.8, linewidth_strip=1.2, size_strip=8, linewidth_box=2, linewidth_axh=2, linewidth_spine=2, path_output=args.path_output, filename='dist_int_ratings', extension='png')
+
+        if args.path_dot_product is not None:
+            #Plot the correlation
+            x = 'Pattern expression'
+            y = 'FACS score'
+            idx = 0 #Adjust to change the color
+
+            signature_dot_prod=np.load(args.path_dot_product)
+            plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[y_facs], path_output=args.path_output, idx=idx, palette=green_palette, extension='png')
+
