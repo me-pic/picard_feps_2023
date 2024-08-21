@@ -366,7 +366,7 @@ if __name__ == "__main__":
     parser.add_argument("--path_feps", type=str, default=None)
     parser.add_argument("--path_facs_feps", type=str, default=None)
     parser.add_argument("--path_behavioral", type=str, default=None)
-    parser.add_argument("--path_dot_product", type=str, default=None)
+    parser.add_argument("--path_feps_expression", type=str, default=None)
     parser.add_argument("--path_performance", type=str, default=None)
     parser.add_argument("--path_y_test", type=str, default=None)
     parser.add_argument("--path_y_pred", type=str, default=None)
@@ -416,11 +416,11 @@ if __name__ == "__main__":
         plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette, extension='png')
 
 
-    if args.path_dot_product is not None:
+    if args.path_feps_expression is not None:
         #Define the parameters
         dot_prod_col = 'dot_prod_log'
         facs_col = 'facs_log'
-        dot_prod_scores = pd.read_csv(args.path_dot_product)
+        dot_prod_scores = pd.read_csv(args.path_feps_expression)
 
         #Plot facs x feps scores for painful trials 
         plot_feps_facs(dot_prod_scores[dot_prod_scores['condition'] != 'warm'], dot_prod_col, facs_col, args.path_output, extension='png')
