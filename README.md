@@ -85,7 +85,7 @@ The visualization script can be run with [visualization.py](https://github.com/m
 
 <b>How to launch the visualization script:</b>
 <br>`python ./visualization.py --path_output '/path/to/output' --path_feps '/path/to/feps' 
---path_behavioral '/path/to/behavioral/measures' --path_dot_product '/path/to/dot/product' 
+--path_behavioral '/path/to/behavioral/measures' --path_dot_product '/path/to/dot/product' --path_feps_expression '/path/to/feps/expression/scores'
 --path_performance '/path/to/performance/metrics' --path_y_test 'path/to/y/test' --path_y_pred 
 '/path/to/y/pred' --path_siips_similarity_networks '/path/siips/similarity' --path_pvp_similarity_networks '/path/pvp/similarity' --path_maths_similarity_networks '/path/maths/similarity' --path_similarity_matrix '/path/similarity/matrix'`
 - --path_output: specifies the path to output the figures
@@ -96,7 +96,8 @@ measures
 - --path_dot_product (optional): specified the path to the npy file containing the dot product 
 values between a signature weights and the FACS scores. If not specified, the correlation between 
 the signature expression and the FACS scores will not be plotted
- - --path_performance (optional): specifies the path to the csv file containing the 
+- --path_feps_expression (optional): specified the path to the csv file containing the feps expression scores for each activation maps, and the experimental condition related to each map
+- --path_performance (optional): specifies the path to the csv file containing the 
 performance 
 metrics of the model. If not specified, the violin plot of the model performance will not be 
 plotted
