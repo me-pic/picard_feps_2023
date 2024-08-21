@@ -1,8 +1,11 @@
+# NOTE: to use the violin_plot_performance function, you'll need to use an virtual 
+# environment with seaborn version 0.11.0
+
+
 import os
 import pickle
 import json
 import numpy as np
-import ptitprince as pt
 import networkx as nx
 from nilearn import plotting
 import matplotlib.ticker as ticker
@@ -12,6 +15,9 @@ import seaborn as sns
 import pickle
 from argparse import ArgumentParser
 from joypy import joyplot
+
+if sns.__version__ == '0.11.0': 
+    import ptitprince as pt
 
 def load_pickle(path):
     file = open(path,'rb')
@@ -27,7 +33,7 @@ def load_json(path):
     return object_file
 
 
-def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, palette=None):
+def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, palette=None, extension='svg'):
     """
     Parameters
     ----------
@@ -51,10 +57,10 @@ def plot_FACS_pattern(x, y, signature_dot_prod, FACS, path_output='', idx=0, pal
                         data=pd.DataFrame(np.array([signature_dot_prod, FACS]).T, columns=[x, y]),
                         line_kws={'color': palette[idx]},
                         scatter_kws={'color': palette[idx]})
-    plt.savefig(os.path.join(path_output, f'lmplot_{x}_expression_FACS.svg'))
+    plt.savefig(os.path.join(path_output, f'lmplot_{x}_expression_FACS.{extension}'))
 
 
-def violin_plot_performance(df, metric='pearson_r', color='#fe9929', path_output='', filename='violin_plot'):
+def violin_plot_performance(df, metric='pearson_r', figsize = (0.6, 1.5), color='#fe9929', linewidth_half=1, alpha_half=1, linewidth_strip=0.2, size_strip=5, linewidth_box=1, linewidth_axh=0.6, linewidth_spine=1, path_output='', filename='violin_plot', extension='svg'):
     """
     Plot the violin plot associated to the model performance across all folds
 
@@ -64,6 +70,8 @@ def violin_plot_performance(df, metric='pearson_r', color='#fe9929', path_output
         dataFrame containing the performance metrics for all folds
     metric: string
         performance metric to use as defined in the dataFrame
+    figsize: tuple
+        figure size
     color: string
         color to use for the plots
     path_output: string
@@ -77,34 +85,34 @@ def violin_plot_performance(df, metric='pearson_r', color='#fe9929', path_output
     labelfontsize = 7
     ticksfontsize = np.round(labelfontsize*0.8)
 
-    fig1, ax1 = plt.subplots(figsize=(0.6, 1.5))
+    fig1, ax1 = plt.subplots(figsize=figsize)
     pt.half_violinplot(y=df[metric], inner=None,
                     width=0.6,
                         offset=0.17, cut=1, ax=ax1,
                         color=colp,
-                        linewidth=1, alpha=1, zorder=19)
+                        linewidth=linewidth_half, alpha=alpha_half, zorder=19)
     sns.stripplot(y=df[metric],
                     jitter=0.08, ax=ax1,
                     color=colp,
-                    linewidth=0.2, alpha=0.6, zorder=1)
-    sns.boxplot(y=df[metric], whis=np.inf, linewidth=1, ax=ax1,
+                    linewidth=linewidth_strip, alpha=0.6, zorder=1, size=size_strip)
+    sns.boxplot(y=df[metric], whis=np.inf, linewidth=linewidth_box, ax=ax1,
                 width=0.1, boxprops={"zorder": 10, 'alpha': 0.5},
                 whiskerprops={'zorder': 10, 'alpha': 1},
                 color=colp,
                 medianprops={'zorder': 11, 'alpha': 0.9})
 
-    ax1.axhline(0, linestyle='--', color='k', linewidth=0.6)
+    ax1.axhline(0, linestyle='--', color='k', linewidth=linewidth_axh)
     ax1.set_ylabel(metric, fontsize=labelfontsize, labelpad=0.7)
     ax1.tick_params(axis='y', labelsize=ticksfontsize)
     ax1.set_xticks([], [])
     for axis in ['top','bottom','left','right']:
-        ax1.spines[axis].set_linewidth(1)
+        ax1.spines[axis].set_linewidth(linewidth_spine)
     ax1.tick_params(width=1, direction='out', length=4)
     fig1.tight_layout()
-    plt.savefig(os.path.join(path_output, f'{filename}.svg'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+    plt.savefig(os.path.join(path_output, f'{filename}.{extension}'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
 
 
-def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot'):
+def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot', extension='svg'):
     """
     Plot the regression plot associated to the model performance. One regression line will be plotted by fold
 
@@ -136,10 +144,10 @@ def reg_plot_performance(y_test, y_pred, path_output='', filename='regplot'):
     for axis in ['top','bottom','left','right']:
         ax1.spines[axis].set_linewidth(2.6)
     ax1.tick_params(width=2.6, direction='out', length=10)
-    plt.savefig(os.path.join(path_output, f'{filename}.svg'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+    plt.savefig(os.path.join(path_output, f'{filename}.{extension}'),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
 
 
-def plotting_signature_weights(path_signature, coords_to_plot, path_output):
+def plotting_signature_weights(path_signature, coords_to_plot, path_output, extension='svg'):
     """
     Plot the signature weights given a set of coordinates
     
@@ -172,11 +180,11 @@ def plotting_signature_weights(path_signature, coords_to_plot, path_output):
                             annotate=False)
             disp.annotate(size=ticksfontsize, left_right=False)
             
-            fig.savefig(os.path.join(path_output, f'{filename}_{axis}_{str(c)}.svg'),
+            fig.savefig(os.path.join(path_output, f'{filename}_{axis}_{str(c)}.{extension}'),
                         transparent=True, bbox_inches='tight', dpi=600)
 
 
-def plot_similarity_matrix(similarity_matrix, labels, path_output):
+def plot_similarity_matrix(similarity_matrix, labels, path_output, extension='svg'):
     """
     Parameters
     ----------
@@ -196,10 +204,10 @@ def plot_similarity_matrix(similarity_matrix, labels, path_output):
     plt.xticks(np.arange(len(labels)) + .5,labels=labels)
     plt.yticks(np.arange(len(labels)) + .5,labels=labels)
     plt.show()
-    fig.savefig(os.path.join(path_output, 'similarity_matrix_full_brain.svg'),transparent=True, bbox_inches='tight', facecolor='white', dpi=600)
+    fig.savefig(os.path.join(path_output, f'similarity_matrix_full_brain.{extension}'),transparent=True, bbox_inches='tight', facecolor='white', dpi=600)
 
 
-def plot_network_diagram(dict_similarity, path_output):
+def plot_network_diagram(dict_similarity, path_output, extension='svg'):
     """
     Parameters
     ----------
@@ -232,10 +240,10 @@ def plot_network_diagram(dict_similarity, path_output):
     nx.draw(
         G, pos, **options
     )
-    plt.savefig(os.path.join(path_output, 'graph_network_similarity.svg'), dpi=300, transparent=True)
+    plt.savefig(os.path.join(path_output, f'graph_network_similarity.{extension}'), dpi=300, transparent=True)
 
 
-def plot_similarity_from_network(dict_similarity, path_output, label=None):
+def plot_similarity_from_network(dict_similarity, path_output, label=None, extension='svg'):
     """
     Parameters
     ----------
@@ -268,15 +276,95 @@ def plot_similarity_from_network(dict_similarity, path_output, label=None):
     plt.axvline(x = dict_similarity['similarity']['vn'], ymin = 0.022, ymax = 0.132, color = hls[6], lw=3)
     plt.xlabel("Null distributions")
     plt.ylabel("Cortical networks")
-    plt.savefig(os.path.join(path_output, f"ridgeplot_{label}_cortical_networks.svg"), 
+    plt.savefig(os.path.join(path_output, f"ridgeplot_{label}_cortical_networks.{extension}"), 
                 dpi=300, transparent=True)
     
 
+def plot_behav_across_trials(data, y, palette, path_output, extension="svg"):
+    """
+    Parameters
+    ----------
+    data : dataFrame
+        dataframe containing the behavioral data to plot, with a trial column and 
+        a run column
+    y: string
+        name of the y axis
+    palette: list
+        color palette to use
+    path_output: string
+        path for saving the output(s)
+    """
+    plt.figure(figsize=(12,4))
+    sns.lineplot(data=data, x='trial', y=y, hue='run', palette=palette)
+    plt.xticks(np.arange(0, 8, 1), ['1', '2', '3', '4', '5', '6', '7', '8'])
+    if y == "FACS LOG":
+        y_label = "log(FACS scores + 1)"
+    elif y == "VAS INT": 
+        y_label = "Intensity ratings"
+
+    plt.ylabel(y_label)
+    plt.xlabel("Trials")
+    plt.savefig(os.path.join(path_output, f"{y}_across_trials.{extension}"), dpi=600, transparent=True)
+
+
+def plot_feps_facs(data, x, y, path_output, extension='svg'):
+    """
+    Parameters
+    ----------
+    data: dataFrame
+        dataFrame containing the log transformed facs scores and the feps expression scores
+    x: string
+        column of the dataFrame containing the feps expression scores
+    y: string
+        column of the dataFrame containing the log transformed FACS scores
+    path_output: string
+        path for saving the output(s)
+    """
+    fig1, ax1 = plt.subplots(figsize=(10, 10))
+
+    sns.regplot(data, y=y, x=x, color='#66DCA0', scatter_kws={'edgecolor':'#36454F', 'alpha':0.5, 'zorder': 10})
+
+    plt.xlabel("FEPS pattern expression scores")
+    plt.ylabel("log(FACS scores + 1)")
+    plt.savefig(os.path.join(path_output, f"feps_facs_regplot.{extension}"),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
+
+
+def plot_feps_across_cond(data, x, y, path_output, extension='svg'):
+    """
+    Parameters
+    ----------
+    data: dataFrame
+        dataFrame containing the feps expression scores and the experimental conditions
+    x: string
+        column of the dataFrame containing the feps expression scores
+    y: string
+        column of the dataFrame containing the experimental conditions
+    path_output: string
+        path for saving the output(s)   
+    """
+    hls = sns.color_palette("hls", 7)
+
+    fig1, ax1 = plt.subplots(figsize=(10, 10))
+
+    sns.stripplot(data=data, palette=[hls[2],hls[3],hls[4]],
+                x=x, y=y, 
+                linewidth=1.2, alpha=0.45, zorder=0, size=10, edgecolor='#36454F'
+                )
+    sns.boxplot(data=data, color='black', 
+                x=x, y=y, linewidth = 2, 
+                width=0.2, boxprops={"zorder": 10, 'alpha': 1},
+                medianprops={'zorder': 11, 'alpha': 0.9}, showfliers=False, fill=False
+            )
+
+    plt.xlabel("FEPS pattern expression scores")
+
+    plt.savefig(os.path.join(path_output, f"feps_pattern_expression_cond.{extension}"),transparent=False, bbox_inches='tight', facecolor='white', dpi=600)
     
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--path_output", type=str, default=None)
     parser.add_argument("--path_feps", type=str, default=None)
+    parser.add_argument("--path_facs_feps", type=str, default=None)
     parser.add_argument("--path_behavioral", type=str, default=None)
     parser.add_argument("--path_dot_product", type=str, default=None)
     parser.add_argument("--path_performance", type=str, default=None)
@@ -315,17 +403,30 @@ if __name__ == "__main__":
     ########################################################################################
     #Plotting the correlation between the signature expression and the FACS scores
     ########################################################################################
-    if args.path_dot_product is not None:
+    if args.path_facs_feps is not None:
         #Define the parameters
         behavioral_col = 'FACS'
-        df_behavioral = pd.read_csv(args.path_behavioral)
+        df_behavioral = pd.read_csv(args.path_facs_feps)
         x = 'Pattern expression'
         y = 'FACS score'
         idx = 0 #Adjust to change the color
 
         #Plot the correlation 
         signature_dot_prod=np.load(args.path_dot_product)
-        plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette)
+        plot_FACS_pattern(x, y, signature_dot_prod, df_behavioral[behavioral_col], path_output=args.path_output, idx=idx, palette=green_palette, extension='png')
+
+
+    if args.path_dot_product is not None:
+        #Define the parameters
+        dot_prod_col = 'dot_prod_log'
+        facs_col = 'facs_log'
+        dot_prod_scores = pd.read_csv(args.path_dot_product)
+
+        #Plot facs x feps scores for painful trials 
+        plot_feps_facs(dot_prod_scores[dot_prod_scores['condition'] != 'warm'], dot_prod_col, facs_col, args.path_output, extension='png')
+        # Plot FEPS expression scores distribution across experimental conditions
+        plot_feps_across_cond(dot_prod_scores, x=dot_prod_col, y="condition", path_output=args.path_output, extension='png')
+        
 
     ########################################################################################
     #Plotting the performance of the model
@@ -379,3 +480,33 @@ if __name__ == "__main__":
         label = args.path_similarity_networks.split('/')[-1].split('.')[0]
         similarity_feps_sign = load_json(args.path_similarity_networks)
         plot_similarity_from_network(similarity_feps_sign, args.path_output, label)
+
+    ########################################################################################
+    #Behavioral scores
+    ########################################################################################
+    
+    if args.path_behavioral is not None:
+        df_behavioral = pd.read_csv(args.path_behavioral)
+
+        # LOG TRANSFORMED FACS
+        y_facs = 'FACS LOG'
+        palette_facs = ['#fec44f', '#ec7014']
+        color_facs = '#fe9929'
+
+        # Log transformed FACS across trials
+        plot_behav_across_trials(df_behavioral, y_facs, palette_facs, args.path_output, extension='png')
+
+        # Log transformed FACS distribution
+        violin_plot_performance(df_behavioral, metric=y_facs, figsize = (3, 3.8), color=color_facs, linewidth_half=2, alpha_half=0.8, linewidth_strip=1.2, size_strip=8, linewidth_box=2, linewidth_axh=2, linewidth_spine=2, path_output=args.path_output, filename='dist_FACS_log', extension='png')
+
+        # INTENSITY RATINGS
+        y_int = 'VAS INT'
+        palette_int =['#7fcdbb', '#1d91c0']
+        color_int = '#41b6c4'
+
+        # Intensity rating across trials
+        plot_behav_across_trials(df_behavioral, y_int, palette_int, args.path_output, extension='png')
+
+        # Intensity rating distribution
+        # NOTE: Make sure you are in a virtual environment with seaborn 0.11.0
+        violin_plot_performance(df_behavioral, metric=y_int, figsize = (3, 3.8), color=color_int, linewidth_half=2, alpha_half=0.8, linewidth_strip=1.2, size_strip=8, linewidth_box=2, linewidth_axh=2, linewidth_spine=2, path_output=args.path_output, filename='dist_int_ratings', extension='png')
