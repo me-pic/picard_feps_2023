@@ -1,6 +1,9 @@
 # Code for Picard et al., A distributed brain response predicting the facial expression of acute nociceptive pain
 
+[![DOI:[10.7554/eLife.87962.2]](http://img.shields.io/badge/DOI-10.7554/eLife.87962.2-blue.svg)](https://doi.org/10.7554/eLife.87962.2)
+
 ---
+
 **NOTE**
 
 The scripts were developed to analyze already preprocessed trial-by-trial fMRI activation maps (hdr/img files). The data used in 
@@ -8,7 +11,7 @@ this study come from Kunz et al. (2012) study. The data were not in BIDS format,
 organized data. Each script can be run separately (see the documentation below), but a main script 
 ([main.py](https://github.com/me-pic/picard_feps_2022/blob/main/scripts/main.py)) is provided to run the complete analysis pipeline.
 
-The preprocessing of the data and the first level analysis were performed using SPM8. Details about those steps can be found in the Method section of the article.
+The preprocessing of the data and the first level analysis were performed using SPM8. Details about those steps can be found in the Method section of [the article](https://doi.org/10.7554/eLife.87962.2).
 
 The brain signatures used for the similarity analyis can be found below:
 - NPS: on request from Tor Wager
